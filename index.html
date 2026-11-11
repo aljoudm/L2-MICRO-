@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 02 · The Pedestrian Crossing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1f; --panel:#121a30; --panel2:#18223d; --line:#283457; --text:#eef2ff; --muted:#93a0c4;
+  --red:#ff4d5e; --yel:#ffc53d; --grn:#2fe69a; --blue:#5cc8ff; --vio:#a78bfa; --org:#ff9f43;
+  --font:'Fredoka','Nunito','Segoe UI',system-ui,sans-serif;
+  --mono:'JetBrains Mono',Consolas,'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#05080f;color:var(--text);font-family:var(--font);overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center;overflow:hidden;
+  background:radial-gradient(1200px 500px at 80% -10%,#1b2a55 0%,transparent 60%),radial-gradient(900px 500px at -10% 110%,#13314a 0%,transparent 55%),var(--bg);
+  border-radius:6px}
+.progress{position:absolute;left:0;top:0;right:0;height:5px;background:#0f1730;z-index:20}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--yel),var(--grn));transition:width .4s}
+.slide{position:absolute;inset:0;padding:46px 64px 74px;opacity:0;visibility:hidden;transform:translateX(30px);transition:opacity .45s,transform .45s,visibility 0s .45s}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .45s,transform .45s}
+.slide.back{transform:translateX(-30px)}
+.kicker{font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:var(--yel);font-weight:600;margin-bottom:6px}
+h2{font-size:42px;font-weight:700;line-height:1.1;margin-bottom:8px}
+h2 .g{color:var(--grn)} h2 .r{color:var(--red)} h2 .y{color:var(--yel)} h2 .b{color:var(--blue)}
+.lead{font-size:21px;color:var(--muted);max-width:1000px}
+.row{display:flex;gap:28px}
+.col{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
+.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:11px 18px;font-size:18px;font-weight:600;transition:transform .12s,background .2s}
+.btn:hover{background:#22305a;transform:translateY(-2px)}
+.btn.pri{background:linear-gradient(135deg,#1fbf7f,#2fe69a);color:#05261a;border:none}
+.btn.warn{background:linear-gradient(135deg,#ff4d5e,#ff7a59);color:#fff;border:none}
+.btn.ylw{background:linear-gradient(135deg,#ffb020,#ffd65c);color:#3a2600;border:none}
+.btn.sm{padding:7px 12px;font-size:15px;border-radius:10px}
+.reveal-in>*{opacity:0;transform:translateY(14px)}
+.slide.active .reveal-in>*{animation:rise .55s forwards}
+.slide.active .reveal-in>*:nth-child(2){animation-delay:.12s}
+.slide.active .reveal-in>*:nth-child(3){animation-delay:.24s}
+.slide.active .reveal-in>*:nth-child(4){animation-delay:.36s}
+.slide.active .reveal-in>*:nth-child(5){animation-delay:.48s}
+.slide.active .reveal-in>*:nth-child(6){animation-delay:.6s}
+@keyframes rise{to{opacity:1;transform:none}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.shake{animation:shake .3s 2}
+
+/* HUD */
+.hud{position:absolute;right:18px;bottom:14px;display:flex;gap:8px;align-items:center;z-index:30}
+.hud .chip{background:#0f1730cc;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;color:var(--muted)}
+.hud button{background:#0f1730cc;border:1px solid var(--line);color:var(--text);border-radius:10px;width:38px;height:34px;font-size:16px}
+.hud button:hover{background:#22305a}
+.brandbar{position:absolute;left:22px;bottom:18px;font-size:12px;letter-spacing:.2em;color:#56628a;z-index:30}
+#notes{position:absolute;left:0;right:0;bottom:0;background:#05080fef;border-top:2px solid var(--yel);padding:16px 26px 60px;font-size:17px;color:#e8e2c8;transform:translateY(100%);transition:transform .3s;z-index:25;line-height:1.45}
+#notes.show{transform:none}
+#notes b{color:var(--yel)}
+
+/* Code */
+.code{background:#070b17;border:1px solid var(--line);border-radius:16px;padding:12px 0;font-family:var(--mono);font-size:15px;line-height:1.5;position:relative}
+.code .ln{display:flex;padding:0 14px 0 0;border-left:4px solid transparent;transition:background .2s}
+.code .no{width:40px;text-align:right;padding-right:14px;color:#3d4a70;user-select:none;flex:none}
+.code .tx{white-space:pre;color:#dfe6ff}
+.code .ln.cur{background:#1d3a63;border-left-color:var(--yel)}
+.code .ln.cur .no{color:var(--yel)}
+.code .k{color:#c792ea}.code .f{color:#82aaff}.code .v{color:#ffcb6b}.code .n{color:#f78c6c}.code .c{color:#5f6d96;font-style:italic}.code .id{color:#89ddff}
+.code.click .ln{cursor:pointer}.code.click .ln:hover{background:#151f3a}
+.code .ln.found{background:#3b1520;border-left-color:var(--red)}
+.code .ln.stop{background:#3a2a0b;border-left-color:var(--yel)}
+.code .ln.glow{background:#123a2c;border-left-color:var(--grn)}
+.code .ln.flash{animation:flash 1s}
+@keyframes flash{0%{background:#5a4a12}100%{background:transparent}}
+
+/* Traffic lights */
+.lights{display:flex;gap:20px;align-items:flex-end;justify-content:center}
+.pole{background:#070a14;border:3px solid #2a3558;border-radius:24px;padding:12px;display:flex;flex-direction:column;gap:10px;align-items:center;box-shadow:0 10px 30px #0008}
+.pole .lbl{font-size:12px;letter-spacing:.15em;color:var(--muted);margin-top:2px}
+.lamp{width:56px;height:56px;border-radius:50%;background:#1a2034;position:relative;transition:background .25s,box-shadow .25s;display:grid;place-items:center;border:2px solid #0000}
+.lamp[data-c=r]{--c:var(--red)}.lamp[data-c=y]{--c:var(--yel)}.lamp[data-c=g]{--c:var(--grn)}
+.lamp.on{background:var(--c);box-shadow:0 0 16px var(--c),0 0 44px var(--c)}
+.lamp.ped{border-radius:14px}
+.lamp.ped svg{width:70%;height:70%;fill:#ffffff14;transition:fill .25s,filter .25s}
+.lamp.ped.on{background:#0d0f18;box-shadow:0 0 0 2px #0000,inset 0 0 18px #000}
+.lamp.ped.on svg{fill:var(--c);filter:drop-shadow(0 0 6px var(--c)) drop-shadow(0 0 14px var(--c))}
+.lights.lg .lamp{width:84px;height:84px}
+.lights.sm .lamp{width:40px;height:40px}.lights.sm .pole{padding:8px;gap:7px;border-radius:16px}
+.lights.xs .lamp{width:24px;height:24px}.lights.xs .pole{padding:6px;gap:5px;border-radius:12px;border-width:2px}.lights.xs .lbl{display:none}.lights.xs{gap:8px}
+.lights.pick .lamp{cursor:pointer}
+.lamp.right::after,.lamp.wrong::after{position:absolute;right:-12px;top:-10px;font-size:18px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700}
+.lamp.right::after{content:'✓';background:var(--grn);color:#042}
+.lamp.wrong::after{content:'✗';background:var(--red);color:#fff}
+.danger{outline:4px solid var(--red);animation:dang .5s infinite alternate}
+@keyframes dang{to{outline-color:#ff4d5e33}}
+
+/* Title */
+.s-title .wrap{display:flex;align-items:center;justify-content:space-between;height:100%}
+.s-title h1{font-size:84px;line-height:1;font-weight:700;margin:10px 0 18px}
+.s-title h1 .g{color:var(--grn);text-shadow:0 0 30px #2fe69a66}
+.s-title .sub{font-size:26px;color:var(--muted);margin-bottom:26px}
+.tags{display:flex;gap:12px;flex-wrap:wrap}
+.tags span{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:18px}
+.s-title .hint{position:absolute;left:64px;bottom:60px;color:#6b7aa6;font-size:16px;animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* Flip cards */
+.flips{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:26px}
+.flip{perspective:900px;height:300px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .fa,.flip .fb{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;padding:22px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.flip .fa{background:var(--panel);border:1px solid var(--line)}
+.flip .fb{background:linear-gradient(160deg,#173a33,#122a3d);border:1px solid #2fe69a55;transform:rotateY(180deg)}
+.flip .q{font-size:24px;font-weight:600;line-height:1.25}
+.flip .q code,.flip .a code{font-family:var(--mono);color:var(--blue);font-size:.86em}
+.flip .a{font-size:21px;line-height:1.35}
+.flip .num{font-size:14px;color:var(--yel);letter-spacing:.15em}
+.flip .tap{font-size:14px;color:#6b7aa6}
+
+/* Hook */
+.scene{position:relative;margin-top:12px;border-radius:20px;overflow:hidden;border:1px solid var(--line)}
+.scene svg{display:block;width:100%}
+.sl{fill:#232a42;transition:fill .2s}
+.sl.on.r{fill:var(--red);filter:drop-shadow(0 0 8px var(--red))}
+.sl.on.y{fill:var(--yel);filter:drop-shadow(0 0 8px var(--yel))}
+.sl.on.g{fill:var(--grn);filter:drop-shadow(0 0 8px var(--grn))}
+.dangerBox{position:absolute;inset:0;display:grid;place-items:center;background:#ff2a3d22;opacity:0;pointer-events:none}
+.dangerBox.show{opacity:1;animation:dang .4s infinite alternate;outline:6px solid var(--red);outline-offset:-6px}
+.dangerBox div{background:#1a0509ee;border:3px solid var(--red);border-radius:20px;padding:16px 30px;font-size:36px;font-weight:700;color:#fff;text-align:center}
+.dangerBox small{display:block;font-size:19px;color:#ffb3bb;font-weight:500}
+.phaseTag{position:absolute;left:18px;top:14px;background:#000a;border-radius:12px;padding:6px 14px;font-size:18px}
+
+/* Order */
+.ocards{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:28px}
+.ocard{position:relative;background:var(--panel);border:2px solid var(--line);border-radius:20px;padding:22px 16px;display:flex;flex-direction:column;align-items:center;gap:16px;cursor:pointer;transition:transform .15s,border-color .2s}
+.ocard:hover{transform:translateY(-4px)}
+.ocard .t{font-size:24px;font-weight:600;text-align:center}
+.ocard .badge{position:absolute;top:-16px;left:-16px;width:44px;height:44px;border-radius:50%;background:var(--yel);color:#3a2600;font-size:24px;font-weight:700;display:none;place-items:center;box-shadow:0 4px 14px #0008}
+.ocard.picked{border-color:var(--yel)}.ocard.picked .badge{display:grid}
+.ocard.good{border-color:var(--grn)}.ocard.good .badge{background:var(--grn);color:#042}
+.ocard.bad{border-color:var(--red)}.ocard.bad .badge{background:var(--red);color:#fff}
+.msg{font-size:21px;min-height:32px;margin-top:4px}
+.msg.ok{color:var(--grn)}.msg.no{color:var(--red)}
+
+/* circuit svgs */
+.wire{fill:none;stroke:#c9d3f5;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.flow{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:3 16;opacity:0;stroke:var(--yel)}
+.flow.on{opacity:1;animation:flowA .6s linear infinite}
+@keyframes flowA{to{stroke-dashoffset:-19}}
+.ledc{transition:fill .25s,filter .25s}
+.svgtxt{font-family:var(--font)}.svgtxt:not([fill]){fill:#c9d3f5}
+.mono{font-family:var(--mono)}
+
+.facts .card{display:flex;gap:14px;align-items:flex-start;font-size:19px;line-height:1.35}
+.facts .ic{font-size:30px;flex:none}
+.facts b{color:var(--yel)}
+
+table.map{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:19px}
+table.map td{padding:8px 14px;background:var(--panel)}
+table.map td:first-child{border-radius:12px 0 0 12px}table.map td:last-child{border-radius:0 12px 12px 0}
+.dot{display:inline-block;width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-right:8px}
+.nm{font-family:var(--mono);color:#89ddff;font-size:17px}
+.pin{font-family:var(--mono);font-weight:700;color:var(--org)}
+
+/* constants */
+.phone{width:240px;height:400px;border-radius:36px;background:#05070e;border:3px solid #2a3558;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;box-shadow:0 20px 40px #0009}
+.phone .av{width:92px;height:92px;border-radius:50%;background:linear-gradient(135deg,var(--vio),var(--blue));display:grid;place-items:center;font-size:44px}
+.phone .who{font-size:30px;font-weight:600;text-align:center;min-height:42px;transition:all .3s}
+.phone .who.numb{font-family:var(--mono);font-size:24px;color:var(--muted)}
+.phone .calling{color:var(--grn);font-size:16px;letter-spacing:.2em}
+.bigcode{font-family:var(--mono);font-size:30px;background:#070b17;border:1px solid var(--line);border-radius:16px;padding:20px 26px;white-space:pre}
+.bigcode .k{color:#c792ea}.bigcode .f{color:#82aaff}.bigcode .v{color:#ffcb6b}.bigcode .n{color:#f78c6c}.bigcode .id{color:#89ddff}
+.swap{display:inline-block;transition:all .35s}
+.anat{display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-family:var(--mono);font-size:32px}
+.anat .tok{display:flex;flex-direction:column;align-items:center;gap:10px}
+.anat .tok>span:first-child{background:#070b17;border:1px solid var(--line);border-radius:12px;padding:8px 14px}
+.anat .tok small{font-family:var(--font);font-size:16px;color:var(--muted);text-align:center;max-width:170px;opacity:0;transform:translateY(-6px);transition:all .4s}
+.anat.show .tok small{opacity:1;transform:none}
+.anat .tok:nth-child(2) small{transition-delay:.25s}.anat .tok:nth-child(3) small{transition-delay:.5s}.anat .tok:nth-child(4) small{transition-delay:.75s}.anat .tok:nth-child(5) small{transition-delay:1s}
+.counter{font-size:26px;font-weight:600}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.seg button{background:none;border:none;color:var(--muted);padding:8px 14px;border-radius:10px;font-size:17px;font-weight:600}
+.seg button.on{background:var(--panel2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+
+/* sim */
+.simside{flex:1;display:flex;flex-direction:column;gap:16px}
+.status{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 18px;font-size:20px;min-height:84px;line-height:1.35}
+.status .on{color:var(--grn);font-weight:700}.status .off{color:var(--red);font-weight:700}.status.err{border-color:var(--red);color:#ffb3bb}
+.status code{font-family:var(--mono);color:#89ddff;font-size:.9em}
+.hg{height:14px;background:#0b1226;border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.hg i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--yel),var(--org))}
+.ctrls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.loopflash{font-size:18px;color:var(--vio);opacity:0;transition:opacity .3s;font-weight:600}
+.loopflash.show{opacity:1}
+.note{font-size:16px;color:var(--muted);line-height:1.4}
+
+/* timeline */
+.tl{margin-top:22px;position:relative}
+.tlrow{display:flex;align-items:center;height:56px}
+.tlrow .lab{width:190px;font-family:var(--mono);font-size:17px;color:#89ddff}
+.track{position:relative;width:840px;height:36px;background:#0b1226;border-radius:10px;border:1px solid #1e2947}
+.bar{position:absolute;top:4px;bottom:4px;border-radius:7px}
+.gap{position:absolute;top:-8px;bottom:-8px;background:repeating-linear-gradient(45deg,#ffffff10 0 8px,transparent 8px 16px);border-left:1px dashed #ffffff33;border-right:1px dashed #ffffff33}
+.axis{display:flex;margin-left:190px;width:840px;justify-content:space-between;color:#56628a;font-size:14px;margin-top:4px;font-family:var(--mono)}
+.playhead{position:absolute;top:-6px;bottom:22px;width:3px;background:#fff;box-shadow:0 0 10px #fff;left:190px;border-radius:3px}
+.callout{background:linear-gradient(135deg,#123a2c,#0f2a3a);border:1px solid #2fe69a66;border-radius:16px;padding:14px 18px;font-size:20px}
+
+/* code blanks */
+.blank{font-family:var(--mono);font-size:inherit;background:#2a2410;border:none;border-bottom:2px dashed var(--yel);color:var(--yel);padding:0 3px;border-radius:5px 5px 0 0;outline:none;text-align:center}
+.blank:focus{background:#3d3412;box-shadow:0 0 0 2px #ffc53d55}
+.blank.ok{background:#0f3326;border-bottom:2px solid var(--grn);color:var(--grn)}
+.blank.bad{background:#3b1520;border-bottom:2px solid var(--red);color:#ffb3bb}
+.bw{position:relative;display:inline-block}
+.hints .bw::after{content:attr(data-h);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--vio);color:#160a33;font-family:var(--font);font-size:12px;font-weight:600;padding:2px 8px;border-radius:8px;pointer-events:none;z-index:3}
+.hints .bw.done::after{display:none}
+.tinker{background:linear-gradient(135deg,#ff7a1a22,#ff7a1a08);border:2px solid #ff8a3d;border-radius:18px;padding:14px 18px;display:flex;gap:14px;align-items:center}
+.tinker .logo{width:54px;height:54px;border-radius:14px;background:#ff7a1a;display:grid;place-items:center;font-size:28px;flex:none}
+.tinker a{color:#ffb27a;font-weight:600}.tinker a.tk{color:#2b1200}
+a.btn{text-decoration:none;display:inline-block}
+.tk{background:linear-gradient(135deg,#ff7a1a,#ffa25e);color:#2b1200;border:none}
+.steps{counter-reset:s;display:flex;flex-direction:column;gap:11px}
+.steps li{list-style:none;counter-increment:s;display:flex;gap:14px;align-items:flex-start;font-size:20px;line-height:1.35;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 16px}
+.steps li::before{content:counter(s);flex:none;width:32px;height:32px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--yel)}
+.steps b{color:var(--yel)} .steps code{font-family:var(--mono);color:#89ddff;font-size:.9em}
+.tip{background:#1d1640;border:1px solid #a78bfa66;border-radius:14px;padding:12px 16px;font-size:18px;line-height:1.4}
+.tip b{color:var(--vio)}
+.warnbox{background:#3b1520;border:1px solid #ff4d5e88;border-radius:14px;padding:12px 16px;font-size:18px;line-height:1.4}
+.warnbox b{color:#ff8a95}
+.modal{position:absolute;inset:0;background:#000a;display:none;place-items:center;z-index:40}
+.modal.show{display:grid}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;width:760px}
+.modal textarea{width:100%;height:380px;background:#070b17;color:#dfe6ff;border:1px solid var(--line);border-radius:12px;font-family:var(--mono);font-size:14px;padding:12px}
+
+/* roles */
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:26px}
+.role{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;min-height:390px}
+.role .seat{font-size:15px;letter-spacing:.15em;color:var(--muted)}
+.role .ri{font-size:84px;line-height:1.1}
+.role .rn{font-size:30px;font-weight:700}
+.role .rd{font-size:20px;color:var(--muted);line-height:1.35}
+.role.spin .ri,.role.spin .rn{filter:blur(1.5px)}
+.role.land{animation:land .4s}
+@keyframes land{0%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+/* test */
+.checks{display:flex;flex-direction:column;gap:12px}
+.chk{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:20px;cursor:pointer;user-select:none}
+.chk .bx{width:32px;height:32px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-weight:700}
+.chk.on{border-color:#2fe69a88;background:#10261f}.chk.on .bx{background:var(--grn);border-color:var(--grn);color:#042}
+.chk.on .bx::after{content:'✓'}
+.cycles{display:flex;gap:12px}
+.cyc{width:74px;height:74px;border-radius:50%;border:3px dashed var(--line);display:grid;place-items:center;font-size:18px;font-weight:700;cursor:pointer;color:var(--muted)}
+.cyc.on{border:3px solid var(--grn);background:#10261f;color:var(--grn)}
+.badge3d{position:absolute;inset:0;display:grid;place-items:center;background:#000b;opacity:0;pointer-events:none;transition:opacity .3s;z-index:10}
+.badge3d.show{opacity:1;pointer-events:auto}
+.medal{width:330px;height:330px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc53d 40%,#d48806);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#3a2600;box-shadow:0 0 0 12px #ffc53d44,0 0 80px #ffc53d88;text-align:center;transform:scale(.3) rotate(-20deg);transition:transform .6s cubic-bezier(.2,1.6,.4,1)}
+.badge3d.show .medal{transform:none}
+.medal .e{font-size:90px}.medal .t{font-size:30px;font-weight:700;line-height:1.05}.medal small{font-size:16px;margin-top:6px}
+.confetti{position:absolute;width:10px;height:16px;top:-20px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(780px) rotate(720deg)}}
+.sw{font-family:var(--mono);font-size:54px;font-weight:700;color:var(--yel)}
+
+/* troubleshoot */
+.acc{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.acc .it{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.acc .hd{padding:13px 18px;font-size:20px;font-weight:600;display:flex;justify-content:space-between;cursor:pointer}
+.acc .hd span:last-child{transition:transform .3s;color:var(--muted)}
+.acc .bd{max-height:0;overflow:hidden;transition:max-height .35s,padding .35s;padding:0 18px;font-size:18px;color:#cfd6f0;line-height:1.45}
+.acc .it.open .bd{max-height:140px;padding:0 18px 14px}
+.acc .it.open .hd span:last-child{transform:rotate(90deg)}
+.acc code{font-family:var(--mono);color:#89ddff;font-size:.92em}
+
+/* challenges */
+.chs{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:24px}
+.ch{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.ch .lv{font-size:22px;color:var(--yel)}
+.ch .tt{font-size:26px;font-weight:700}
+.ch p{font-size:18px;color:#cfd6f0;line-height:1.4}
+.ch pre{font-family:var(--mono);font-size:14px;background:#070b17;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:none;color:#dfe6ff;line-height:1.45}
+.ch.open pre{display:block}
+.ch .ans{display:none;font-size:19px;color:var(--grn);font-weight:600}
+.ch.open .ans{display:block}
+.next{background:linear-gradient(135deg,#2a1a55,#162a55);border:1px solid #a78bfa66;border-radius:20px;padding:18px 22px;display:flex;gap:18px;align-items:center;font-size:21px}
+.next .e{font-size:54px}
+
+/* concept */
+.words{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px}
+.word{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.wv{height:92px;display:flex;align-items:center;justify-content:center;gap:16px;background:#0b1226;border-radius:14px;font-size:22px;color:#56628a}
+.wt{font-size:28px;font-weight:700;letter-spacing:.06em;color:var(--yel)}
+.wd{font-size:18px;color:#cfd6f0;line-height:1.4}.wd b.g{color:var(--grn)}.wd b.r{color:var(--red)}
+.word{position:relative;cursor:pointer;user-select:none;transition:border-color .2s}.word:hover{border-color:#ffc53d88}
+.tap{position:absolute;top:10px;right:12px;font-size:13px;color:#6b7aa6}
+.tog{width:70px;height:36px;border-radius:99px;position:relative;background:#5a2330;transition:background .25s}
+.tog i{position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;transition:transform .25s}
+.on .tog{background:#1fbf7f}.on .tog i{transform:translateX(34px)}
+.bit{position:relative;width:96px;height:30px;font-family:var(--mono);font-size:20px;font-weight:700}
+.bit span{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .2s}
+.bit .b1{color:var(--grn);opacity:0}.bit .b0{color:var(--red)}.on .bit .b1{opacity:1}.on .bit .b0{opacity:0}
+.dl{width:40px;height:40px;border-radius:50%;background:#1a2034;transition:all .25s}.on .dl{background:var(--grn);box-shadow:0 0 20px var(--grn)}
+.ard{width:64px;height:48px;border-radius:8px;background:#00878f;color:#fff;font-size:13px;display:grid;place-items:center;font-weight:700}
+.arr{width:100px;height:4px;background:#2a3558;position:relative;border-radius:2px}
+.arr i{position:absolute;top:-6px;left:0;width:16px;height:16px;border-radius:50%;background:var(--yel);box-shadow:0 0 10px var(--yel);opacity:0}
+.send .arr i{animation:mv .8s forwards}
+@keyframes mv{0%{left:0;opacity:1}95%{left:84px;opacity:1}100%{left:84px;opacity:0}}
+.ol{width:40px;height:40px;border-radius:50%;background:#1a2034;transition:all .25s}.lit .ol{background:var(--red);box-shadow:0 0 22px var(--red)}
+.sq span{width:44px;height:44px;border-radius:50%;background:#1a2034;display:grid;place-items:center;font-weight:700;color:#56628a;transition:all .25s}
+.sq span.lit{background:var(--yel);color:#3a2600;box-shadow:0 0 16px var(--yel)}.sq span.done{background:#10261f;color:var(--grn)}
+.uses{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}.uses span{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:17px}
+.goals{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:10px;font-size:18px}.goals li::before{content:'✓ ';color:var(--grn);font-weight:700}
+/* led try */
+.mini-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:16px}.mini-facts div{background:var(--panel2);border-radius:10px;padding:7px 10px}.mini-facts b{color:var(--yel)}
+.tryhd{font-size:23px}.tryhd b{color:var(--grn)}
+.tip code,.facts code,.warnbox code{font-family:var(--mono);color:#89ddff;font-size:.9em}
+/* where */
+.zones .ln.z1{border-left-color:#ffc53d55}.zones .ln.z2{border-left-color:#5cc8ff55}.zones .ln.z3{border-left-color:#a78bfa55}
+.code .ln.zon.z1{background:#3a2f0e}.code .ln.zon.z2{background:#0f2f45}.code .ln.zon.z3{background:#251c48}
+.code .ln.bad{background:#3b1520;border-left-color:var(--red)}
+.errbox{display:none;background:#3b1520;border:2px solid var(--red);border-radius:16px;padding:14px 18px;font-size:19px;line-height:1.4}.errbox.show{display:block}
+.errbox code{font-family:var(--mono);color:#ffb3bb;font-size:.9em}.errbox span{color:#ffd0d5;font-size:17px}
+.pattern{background:#10261f;border:1px solid #2fe69a66;border-radius:12px;padding:9px 14px;font-size:17px}.pattern b{color:var(--grn)}
+/* teams */
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:18px}
+.team{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px 18px}
+.team .tn{font-size:15px;letter-spacing:.15em;color:var(--yel);margin-bottom:4px;font-weight:600}
+.mem{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border-radius:14px;padding:12px 16px;margin-top:8px;gap:12px}
+.mem .nm2{font-size:30px;font-weight:700}.mem .rl{font-size:18px;color:#cfd6f0;text-align:right;line-height:1.35}
+.team.land{animation:land .4s}
+.rolekey{margin-top:16px;font-size:17px;color:var(--muted)}.rolekey b{color:var(--text)}
+/* breadboard */
+.steps.sm{gap:7px}.steps.sm li{font-size:16px;padding:7px 12px;gap:10px}.steps.sm li::before{width:26px;height:26px;font-size:14px}
+.bbc{justify-content:center;margin-top:4px;gap:6px}
+.bbc button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:5px 10px;font-size:14px;font-weight:600}
+.bbc button.on{background:#2a3a66;border-color:var(--yel)}
+.bbc .dotc{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+.bbch{transition:opacity .3s}
+</style>
+</head>
+<body>
+<div id="stage">
+<div class="progress"><i id="prog"></i></div>
+
+<section class="slide s-title" data-id="title" data-time="Intro">
+  <div class="wrap">
+    <div class="reveal-in">
+      <div class="kicker">Fundamentals of Microcontrollers · Lesson 02</div>
+      <h1>The <span class="g">Pedestrian</span><br>Crossing</h1>
+      <div class="sub">Digital outputs in sequence: five LEDs, one safe street.</div>
+      <div class="tags"><span>💡 5 LEDs</span><span>🏷️ Named pins</span><span>⏱️ Step-by-step code</span><span>🧪 Tinkercad</span></div>
+    </div>
+    <div id="titleLights" style="margin-right:60px"></div>
+  </div>
+  <div class="hint">Press → or Space to start</div>
+</section>
+
+<section class="slide" data-id="warm" data-time="5 min">
+  <div class="kicker">Warm-up · Remember Lesson 01?</div>
+  <h2>Quick-fire <span class="y">memory check</span> ⚡</h2>
+  <p class="lead">Answer out loud first, then tap a card to flip it.</p>
+  <div class="flips" id="flips"></div>
+</section>
+
+<section class="slide" data-id="concept" data-time="4 min">
+  <div class="kicker">Today's lesson</div>
+  <h2>Digital Outputs <span class="y">in Sequence</span></h2>
+  <p class="lead">Three words, one big idea. Let's break the name down:</p>
+  <div class="words reveal-in">
+    <div class="word" id="wDig"><div class="tap">👆 tap</div><div class="wv"><div class="tog"><i></i></div><div class="bit"><span class="b1">ON · 1</span><span class="b0">OFF · 0</span></div><div class="dl"></div></div><div class="wt">DIGITAL</div><div class="wd">Only <b>two</b> states: <b class="g">ON</b> or <b class="r">OFF</b>. Like a light switch. No “half on”.</div></div>
+    <div class="word" id="wOut"><div class="tap">👆 tap</div><div class="wv"><div class="ard">UNO</div><div class="arr"><i></i></div><div class="ol"></div></div><div class="wt">OUTPUT</div><div class="wd">The Arduino <b>sends</b> a command <b>out</b> to a part, like an LED.</div></div>
+    <div class="word" id="wSeq"><div class="tap">👆 tap</div><div class="wv sq"><span class="s1">1</span>→<span class="s2">2</span>→<span class="s3">3</span></div><div class="wt">IN SEQUENCE</div><div class="wd">Commands run <b>one after another</b>, in order. Change the order and the result changes!</div></div>
+  </div>
+  <div class="row" style="margin-top:18px;gap:18px">
+    <div class="card" style="flex:1.3"><div style="font-size:19px;font-weight:600">Where do we see it? 🌍</div><div class="uses"><span>🚦 Traffic lights</span><span>🧺 Washing machine: wash → rinse → spin</span><span>🛗 Elevator: close → move → open</span><span>🎆 Light shows</span></div></div>
+    <div class="card" style="flex:1"><div style="font-size:19px;font-weight:600">Today you will…</div><ul class="goals"><li>Wire <b>5 LEDs</b></li><li>Give pins <b>names</b></li><li>Code that runs <b>in order</b></li><li>Build a <b>safe crossing</b> 🚸</li></ul></div>
+  </div>
+</section>
+
+<section class="slide" data-id="hook" data-time="6 min">
+  <div class="kicker">The Problem</div>
+  <h2>Why do the two <span class="g">greens</span> never shine together? 🤔</h2>
+  <div class="scene" id="scene">
+    <svg viewBox="0 0 1160 400" id="street"></svg>
+    <div class="phaseTag" id="phaseTag">Cars GO</div>
+    <div class="dangerBox" id="dangerBox"><div>⚠️ DANGER!<small>Car green and people green are ON together</small></div></div>
+  </div>
+  <div class="ctrls" style="margin-top:14px">
+    <button class="btn pri" id="hkNormal">✅ Normal crossing</button>
+    <button class="btn warn" id="hkBroken">💥 Broken code (both green)</button>
+    <button class="btn" id="hkReset">↺ Reset</button>
+  </div>
+</section>
+
+<section class="slide" data-id="order" data-time="4 min">
+  <div class="kicker">Think like an engineer</div>
+  <h2>Put the crossing <span class="y">in order</span></h2>
+  <p class="lead">Tap the cards in the order they happen. Start with the cars moving.</p>
+  <div class="ocards" id="ocards"></div>
+  <div class="ctrls" style="margin-top:22px">
+    <button class="btn pri" id="oCheck">Check ✓</button>
+    <button class="btn" id="oReset">↺ Try again</button>
+    <div class="msg" id="oMsg"></div>
+  </div>
+</section>
+
+<section class="slide" data-id="led" data-time="6 min">
+  <div class="kicker">Explore + Try · One LED, one path</div>
+  <h2>How a pin lights an <span class="r">LED</span></h2>
+  <div class="row" style="margin-top:10px;gap:22px">
+    <div class="card" style="flex:1.15;padding:10px 12px">
+      <svg viewBox="0 0 620 340" id="ledSvg" style="width:100%;display:block"></svg>
+      <div class="ctrls" style="justify-content:center;margin:0 0 10px"><button class="btn ylw" id="ledBtn">digitalWrite(13, HIGH)</button></div>
+      <div class="mini-facts"><div>➕ <b>Long leg (+)</b> → toward the pin</div><div>➖ <b>Short leg (−)</b> → GND</div><div>🚰 <b>220 Ω</b> resistor protects the LED</div><div>⚡ <b>HIGH</b> = 5 V · <b>LOW</b> = 0 V</div></div>
+    </div>
+    <div class="col" style="flex:1;gap:12px">
+      <div class="tryhd">🧪 <b>Try it!</b> Blink one LED on pin 13</div>
+      <div class="code" id="blinkCode" style="font-size:17px"></div>
+      <div class="ctrls"><button class="btn ylw" id="blinkCopy">📋 Copy code</button><a class="btn tk" href="https://www.tinkercad.com/joinclass/EHCPPMFGE" target="_blank" rel="noopener">🧪 Open Tinkercad ↗</a></div>
+      <div class="msg" id="blinkMsg" style="font-size:17px"></div>
+      <div class="tip" style="font-size:17px">🔁 <b>Revise:</b> change both <code>1000</code> to <code>200</code>. What happens? Why?</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="const" data-time="3 min">
+  <div class="kicker">Explore · Named pin constants</div>
+  <h2>Give your pins <span class="y">names</span> 🏷️</h2>
+  <div class="row" style="margin-top:16px;align-items:center">
+    <div class="phone"><div class="calling">CALLING…</div><div class="av" id="phAv">📞</div><div class="who numb" id="phWho">0551 234 567</div></div>
+    <div class="col" style="flex:1;gap:18px">
+      <div class="bigcode" id="cCode"></div>
+      <div class="ctrls"><button class="btn ylw" id="cBtn">🏷️ Give it a name</button><button class="btn" id="cAnat">🔍 What does each word mean?</button></div>
+      <div class="anat" id="anat">
+        <div class="tok"><span class="k" style="color:#c792ea">const</span><small>never changes</small></div>
+        <div class="tok"><span style="color:#c792ea">int</span><small>a whole number</small></div>
+        <div class="tok"><span style="color:#89ddff">CAR_RED</span><small>the name (in CAPITALS)</small></div>
+        <div class="tok"><span><span style="color:#dfe6ff">= </span><span style="color:#f78c6c">13</span></span><small>the pin number</small></div>
+        <div class="tok"><span>;</span><small>end of the sentence</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="where" data-time="4 min">
+  <div class="kicker">Explore · Where do names live?</div>
+  <h2>Names go at the <span class="y">very top</span> ⬆️</h2>
+  <div class="row" style="margin-top:12px;gap:22px">
+    <div class="col" style="flex:1.05">
+      <div class="code zones" id="whCode" style="font-size:17px"></div>
+      <div class="ctrls"><button class="btn ylw" id="whWalk">▶ Walk through</button><button class="btn warn" id="whBad">🤔 What if names go inside loop()?</button></div>
+    </div>
+    <div class="col facts" style="flex:1;gap:10px">
+      <div class="errbox" id="whErr">❌ <code>'CAR_RED' was not declared in this scope</code><br><span><code>setup()</code> runs first and can't see a name that lives inside <code>loop()</code>. It's like a note locked in one bedroom 🚪</span></div>
+      <div class="card"><span class="ic">🏷️</span><div><b>Constant</b> = a name for a value that <b>never changes</b>. <code>CAR_RED</code> is pin 13, forever.</div></div>
+      <div class="card"><span class="ic">📍</span><div>Write names <b>before setup()</b>. The Arduino reads top → bottom, so a name must exist <b>before</b> it is used.</div></div>
+      <div class="card wh-hide"><span class="ic">🏠</span><div>A name at the top is like a <b>sign at the front door</b>: <code>setup()</code> and <code>loop()</code> can both see it.</div></div>
+      <div class="card wh-hide"><span class="ic">🔜</span><div>A constant is a special kind of <b>variable</b>. Next lesson: variables that <b>can</b> change!</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="change" data-time="3 min">
+  <div class="kicker">Why names are a superpower</div>
+  <h2>Move the red LED to a new pin…</h2>
+  <div class="row" style="margin-top:14px">
+    <div style="flex:1.1"><div class="code" id="chCode" style="font-size:19px"></div></div>
+    <div class="col" style="flex:1;gap:18px">
+      <div><div class="note" style="margin-bottom:6px">Code style</div><div class="seg" id="chMode"><button data-m="num">Numbers only</button><button data-m="name" class="on">With names</button></div></div>
+      <div><div class="note" style="margin-bottom:6px">Red LED is plugged into pin…</div><div class="seg" id="chPin"><button data-p="13" class="on">13</button><button data-p="7">7</button><button data-p="4">4</button></div></div>
+      <div class="card counter" id="chCount">Lines you edited: 0</div>
+      <div class="note" id="chNote">Pick a new pin and watch which lines must change.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="map" data-time="3 min">
+  <div class="kicker">Explore · Five LEDs, five pins</div>
+  <h2>Today's <span class="b">wiring map</span> 🗺️</h2>
+  <div class="row" style="margin-top:10px;align-items:flex-start">
+    <div style="flex:1">
+      <table class="map" id="mapTable"></table>
+      <div class="tip" style="margin-top:8px">🗣️ <b>Say it like an engineer:</b> “Pin 12 goes to a 220 Ω resistor, then to the <b>long leg</b> of the yellow LED.” Not “row 14”!</div>
+    </div>
+    <div class="card" style="flex:1;padding:10px">
+      <svg viewBox="0 0 620 400" id="mapSvg" style="width:100%;display:block"></svg>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="sim" data-time="5 min">
+  <div class="kicker">Explore · Sequential execution</div>
+  <h2>The Arduino reads code <span class="y">one line at a time</span></h2>
+  <div class="row" style="margin-top:12px">
+    <div style="flex:1.15"><div class="code" id="simCode" style="font-size:15px;line-height:1.38"></div></div>
+    <div class="simside">
+      <div id="simLights"></div>
+      <div class="status" id="simStatus"></div>
+      <div class="hg"><i id="simBar"></i></div>
+      <div class="ctrls">
+        <button class="btn pri" id="simPlay">▶ Play</button>
+        <button class="btn ylw" id="simStep">⏭ Step</button>
+        <button class="btn" id="simReset">↺</button>
+        <div class="seg" id="simSpd"><button data-s="1" class="on">1×</button><button data-s="3">3×</button></div>
+      </div>
+      <div class="loopflash" id="simLoop">↩ End of loop(), back to the top!</div>
+      <div class="pattern">Every step follows the same pattern: <b>① old light OFF</b> → <b>② new light ON</b> → <b>③ wait</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="tl" data-time="2 min">
+  <div class="kicker">The whole cycle at a glance</div>
+  <h2>One cycle = <span class="y">14 seconds</span> ⏱️</h2>
+  <div class="row" style="align-items:flex-start">
+    <div class="tl" id="tl"></div>
+    <div id="tlLights" style="margin-top:34px"></div>
+  </div>
+  <div class="callout" style="margin-top:14px">✅ <b style="color:var(--grn)">CAR_GREEN</b> (0–5 s) and <b style="color:var(--grn)">PED_GREEN</b> (8–13 s) <b>never overlap</b>. The striped zones are the <b>safety gaps</b> where everyone sees red.<br>🧠 No <code>if</code> needed: the <b>order of the lines</b> keeps everyone safe. (You'll meet <code>if</code> next lesson!)</div>
+</section>
+
+<section class="slide" data-id="pred" data-time="5 min">
+  <div class="kicker">Try · Predict</div>
+  <h2>Which lights are <span class="g">ON</span> right now?</h2>
+  <div class="row" style="margin-top:10px">
+    <div style="flex:1.1"><div class="code" id="prCode" style="font-size:15px;line-height:1.38"></div></div>
+    <div class="simside" style="align-items:center;justify-content:center">
+      <div class="note" id="prRound" style="font-size:20px;color:var(--yel)">Round 1 of 3</div>
+      <div class="note" style="font-size:19px">🛑 The Arduino just ran the highlighted line.<br><span style="font-size:16px">(setup() already turned PED_RED on)</span><br>Tap the lights you think are ON.</div>
+      <div id="prLights"></div>
+      <div class="ctrls"><button class="btn pri" id="prReveal">👀 Reveal</button><button class="btn" id="prNext">Next round →</button></div>
+      <div class="msg" id="prMsg"></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="bug" data-time="5 min">
+  <div class="kicker">Try · Bug hunt 🐞</div>
+  <h2>Find the bug! <span class="r" id="bgTitle">Round 1</span></h2>
+  <div class="row" style="margin-top:10px">
+    <div style="flex:1.1"><div class="code click" id="bgCode" style="font-size:15px;line-height:1.38"></div></div>
+    <div class="simside">
+      <div class="card" id="bgClue" style="font-size:19px;line-height:1.4"></div>
+      <div id="bgLights"></div>
+      <div class="status" id="bgStatus"></div>
+      <div class="ctrls"><button class="btn warn" id="bgRun">▶ Run the buggy code</button><button class="btn" id="bgNext">Next bug →</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="teams" data-time="3 min">
+  <div class="kicker">Build time · Teams</div>
+  <h2>Teams of <span class="y">2</span> for the real build 🤝</h2>
+  <p class="lead">💻 Tinkercad: everyone builds on their own. 🔌 Real kit: work with your partner.</p>
+  <div class="teams" id="teams"></div>
+  <div class="ctrls" style="margin-top:18px"><button class="btn ylw" id="tmSpin">🎲 Random teams</button><button class="btn" id="tmSwap">⇄ Swap roles</button><button class="btn" id="tmEdit">✏️ Edit names</button></div>
+  <div class="rolekey">🔧 <b>Builder</b> wires the circuit · 🧪 <b>Tester</b> checks it works · 💻 <b>Coder</b> writes &amp; uploads the code · 📓 <b>Notebooker</b> records results</div>
+  <div class="modal" id="tmModal"><div class="box"><div style="font-size:20px;margin-bottom:10px">✏️ Type the names, one per line:</div><textarea id="tmTa" spellcheck="false" style="height:300px;font-family:var(--font);font-size:20px"></textarea><div class="ctrls" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="tmCancel">Cancel</button><button class="btn pri" id="tmSave">Save names</button></div></div></div>
+</section>
+
+<section class="slide" data-id="tcad" data-time="10 min">
+  <div class="kicker">Build · Step 1 · Simulate first (on your own 💻)</div>
+  <h2 style="font-size:36px">Wire it on the <span style="color:#ff8a3d">breadboard</span></h2>
+  <div class="row" style="gap:18px;margin-top:6px">
+    <div class="card" style="flex:1.75;padding:8px 10px"><svg viewBox="0 0 820 460" id="bb1" style="width:100%;display:block"></svg><div class="ctrls bbc" id="bb1c"></div></div>
+    <div class="col" style="flex:1;gap:10px">
+      <div class="tinker" style="padding:10px 14px"><div class="logo" style="width:44px;height:44px;font-size:22px">🧪</div><div style="flex:1"><div style="font-size:18px;font-weight:600">Our Tinkercad class</div><div class="note">Code: <b class="mono" style="color:#ffb27a">EHCPPMFGE</b></div></div><a class="btn tk sm" href="https://www.tinkercad.com/joinclass/EHCPPMFGE" target="_blank" rel="noopener">Open ↗</a></div>
+      <div style="font-size:17px;font-weight:600;color:var(--yel)">For each LED:</div>
+      <ol class="steps sm">
+        <li><div>Wire from the <b>pin</b> → a column.</div></li>
+        <li><div><b>220 Ω resistor</b> from that column → a new column.</div></li>
+        <li><div>LED <b>long leg (+)</b> in the resistor's column, <b>short leg (−)</b> in the next one.</div></li>
+        <li><div><b>Black wire</b> from the short-leg column → <b>(−) rail</b>.</div></li>
+      </ol>
+      <div class="tip" style="font-size:15px;padding:9px 12px">⚫ Only once: a black wire from the <b>(−) rail</b> to Arduino <b>GND</b>.<br>🔧 Tinkercad resistors start at <b>1 kΩ</b>: change to <b>220 Ω</b>. The <b>bent leg</b> = long leg (+).</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="code" data-time="10 min">
+  <div class="kicker">Build · Step 2 · The code</div>
+  <h2 style="font-size:34px">Fill the <span class="y">blanks</span>, then copy &amp; paste</h2>
+  <div class="row" style="gap:18px;margin-top:8px">
+    <div class="col" style="flex:1;gap:12px">
+      <div class="code" id="bkL" style="font-size:13.5px;line-height:1.4"></div>
+      <div class="ctrls">
+        <button class="btn pri sm" id="bkCheck">✓ Check</button>
+        <button class="btn sm" id="bkHint">💡 Hints</button>
+        <button class="btn ylw sm" id="bkCopy">📋 Copy code</button>
+        
+      </div>
+      <div class="msg" id="bkMsg" style="font-size:18px">0 / 8 blanks correct</div>
+      <div class="tinker" style="padding:10px 14px"><div class="logo" style="width:44px;height:44px;font-size:22px">🧪</div><div style="flex:1;font-size:16px;line-height:1.35">Tinkercad: <b>Code</b> → <b>Blocks ▾</b> → <b>Text</b> → delete all → paste → <b>Start Simulation</b></div><a class="btn tk sm" href="https://www.tinkercad.com/joinclass/EHCPPMFGE" target="_blank" rel="noopener">Tinkercad ↗</a></div>
+    </div>
+    <div style="flex:1.05"><div class="code" id="bkR" style="font-size:13.5px;line-height:1.4"></div></div>
+  </div>
+</section>
+
+<section class="slide" data-id="real" data-time="8 min">
+  <div class="kicker">Build · Step 2 · The real kit (teams of 2 🤝)</div>
+  <h2 style="font-size:36px">Build it for real &amp; upload with <span class="b">Arduino IDE</span></h2>
+  <div class="row" style="gap:18px;margin-top:6px">
+    <div class="card" style="flex:1.5;padding:8px 10px"><svg viewBox="0 0 820 460" id="bb2" style="width:100%;display:block"></svg><div class="ctrls bbc" id="bb2c"></div></div>
+    <div class="col" style="flex:1;gap:8px">
+      <div class="warnbox" style="font-size:15px;padding:8px 12px">⚠️ <b>Wire with the USB unplugged.</b> The Tester checks every long leg before plugging in.</div>
+      <ol class="steps sm">
+        <li><div>Open <b>Arduino IDE</b> on the laptop.</div></li>
+        <li><div><code>File → New Sketch</code></div></li>
+        <li><div>Delete everything inside, then <b>paste</b> our code (Ctrl+V).</div></li>
+        <li><div><code>Tools → Board</code> → <b>Arduino Uno</b></div></li>
+        <li><div><code>Tools → Port</code> → the port that appears when you plug in.</div></li>
+        <li><div>Click <b>✓ Verify</b> to check for mistakes, then <b>➜ Upload</b>.</div></li>
+        <li><div>Wait for <b>“Done uploading”</b> 🎉</div></li>
+      </ol>
+      <div class="ctrls"><button class="btn ylw sm" id="realCopy">📋 Copy the full code</button><span class="msg" id="realMsg" style="font-size:15px;margin:0"></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-id="test" data-time="8 min">
+  <div class="kicker">Test · Safety inspector</div>
+  <h2>Does your crossing <span class="g">pass</span>? 🧪</h2>
+  <div class="row" style="margin-top:12px;position:static">
+    <div class="checks" style="flex:1.35" id="checks">
+      <div class="chk" data-c><span class="bx"></span><span>Order is right: GO → SLOW → STOP → WALK → STOP</span></div>
+      <div class="chk" data-c><span class="bx"></span><span>Car GREEN and People GREEN are <b>never</b> on together</span></div>
+      <div class="chk" data-c><span class="bx"></span><span>Safety gap: everyone sees red for about 1 second</span></div>
+      <div class="chk" data-c><span class="bx"></span><span>Every team member can explain one line of the code</span></div>
+    </div>
+    <div class="col" style="flex:1;align-items:center">
+      <div class="note" style="font-size:19px">Runs 3 full cycles correctly?</div>
+      <div class="cycles" id="cycles"><div class="cyc">1</div><div class="cyc">2</div><div class="cyc">3</div></div>
+      <div class="card" style="text-align:center;width:100%">
+        <div class="note">⏱️ Time one cycle (expected ≈ 14 s)</div>
+        <div class="sw" id="sw">0.0 s</div>
+        <div class="ctrls" style="justify-content:center"><button class="btn pri sm" id="swGo">Start / Stop</button><button class="btn sm" id="swRe">Reset</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="badge3d" id="medal"><div class="medal"><div class="e">🏅</div><div class="t">SAFETY<br>INSPECTOR</div><small>Crossing approved!</small></div></div>
+</section>
+
+<section class="slide" data-id="fix" data-time="as needed">
+  <div class="kicker">Something's wrong? Don't panic 🛠️</div>
+  <h2>Troubleshooting guide</h2>
+  <div class="acc" id="acc">
+    <div class="it"><div class="hd"><span>💡 One LED never lights up</span><span>›</span></div><div class="bd">Is the LED backwards? <b>Long leg → pin side</b>. Is a wire loose? Does the pin in your wiring match the number in the <code>const</code> line?</div></div>
+    <div class="it"><div class="hd"><span>❌ Error: <code>'CAR_RED' was not declared</code></span><span>›</span></div><div class="bd">The name is spelled differently somewhere. <code>CAR_RED</code>, <code>Car_Red</code> and <code>CARRED</code> are three different names to the Arduino. Copy the exact spelling from the <code>const</code> line.</div></div>
+    <div class="it"><div class="hd"><span>🔆 A light turns on and never turns off</span><span>›</span></div><div class="bd">You're missing a <code>digitalWrite(..., LOW);</code> for that light. Follow the code with your finger and check each light gets turned OFF somewhere.</div></div>
+    <div class="it"><div class="hd"><span>😱 Both greens are on at the same time</span><span>›</span></div><div class="bd">Check the order: <code>CAR_GREEN</code> must go <b>LOW</b> before <code>PED_GREEN</code> goes <b>HIGH</b>, with the everyone-red safety gap between them.</div></div>
+    <div class="it"><div class="hd"><span>✏️ Error: <code>expected ';' before…</code></span><span>›</span></div><div class="bd">A line is missing its semicolon <code>;</code>. Look at the line <b>above</b> the one the error points to.</div></div>
+    <div class="it"><div class="hd"><span>😴 Nothing happens at all</span><span>›</span></div><div class="bd">Tinkercad: did you press <b>Start Simulation</b>? Real board: is the Board set to <b>Arduino Uno</b> and the right Port chosen? Is the GND rail connected to Arduino <b>GND</b>?</div></div>
+  </div>
+</section>
+
+<section class="slide" data-id="chal" data-time="5 min">
+  <div class="kicker">Revise · Level up</div>
+  <h2>Challenges for fast teams 🚀</h2>
+  <div class="chs" id="chs">
+    <div class="ch"><div class="lv">⭐</div><div class="tt">Slow walkers</div><p>Grandparents need more time! Give people <b>8 seconds</b> to cross. Which single number do you change?</p><pre>// 4) People WALK
+digitalWrite(PED_RED, LOW);
+digitalWrite(PED_GREEN, HIGH);
+delay(8000);   // was 5000</pre><button class="btn sm" data-open>💡 Show answer</button></div>
+    <div class="ch"><div class="lv">⭐⭐</div><div class="tt">Hurry-up blink</div><p>Make the people green <b>blink 3 times</b> before it turns off, like real crossings do.</p><pre>// before PED_GREEN goes LOW:
+digitalWrite(PED_GREEN, LOW);  delay(300);
+digitalWrite(PED_GREEN, HIGH); delay(300);
+// ...copy these 2 lines 3 times</pre><button class="btn sm" data-open>💡 Show hint</button></div>
+    <div class="ch"><div class="lv">⭐⭐⭐</div><div class="tt">Math detective</div><p>Add up the <code style="font-family:var(--mono);color:#89ddff">delay()</code> values to work out one full cycle. Then check with a stopwatch!</p><div class="ans">5 + 2 + 1 + 5 + 1 = 14 seconds ✓<br><span style="color:var(--muted);font-weight:500;font-size:16px">With the blink challenge: +1.8 s</span></div><button class="btn sm" data-open>💡 Show answer</button></div>
+  </div>
+</section>
+
+<section class="slide" data-id="exit" data-time="3 min">
+  <div class="kicker">Exit ticket</div>
+  <h2>Before you leave… 🎟️</h2>
+  <div class="flips" id="exitFlips" style="grid-template-columns:repeat(3,1fr);margin-top:18px"></div>
+  <div class="next" style="margin-top:22px"><div class="e">🚀</div><div><b>Next lesson:</b> a rocket countdown from 10 to 0 with <b style="color:var(--blue)">variables</b> and the <b style="color:var(--blue)">Serial Monitor</b>. 🧰 Now put every part back in its labelled compartment!</div></div>
+</section>
+
+<div class="brandbar">966 INNOVATION HUB · ROBOTICS &amp; AI</div>
+<div class="hud"><span class="chip" id="timeChip">⏱ Intro</span><span class="chip" id="count">1 / 22</span><button id="bPrev" title="Previous (←)">←</button><button id="bNext" title="Next (→)">→</button><button id="bFs" title="Fullscreen (F)">⛶</button></div>
+<div id="notes"></div>
+<div class="modal" id="cpModal"><div class="box"><div style="font-size:20px;margin-bottom:10px">Copy didn't work automatically. Select all (Ctrl+A), then copy (Ctrl+C):</div><textarea id="cpTa" spellcheck="false"></textarea><div class="ctrls" style="margin-top:10px;justify-content:flex-end"><button class="btn" id="cpClose">Close</button></div></div></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const stage=$('#stage');
+function fit(){const s=Math.min(innerWidth/1280,innerHeight/720);stage.style.transform=`translate(-50%,-50%) scale(${s})`;}
+addEventListener('resize',fit);fit();
+
+/* ---------- shared bits ---------- */
+const STAND='<svg viewBox="0 0 24 24"><circle cx="12" cy="3.6" r="2.6"/><rect x="8.4" y="7" width="7.2" height="8.6" rx="2.2"/><rect x="8.9" y="14.5" width="2.5" height="8" rx="1.2"/><rect x="12.6" y="14.5" width="2.5" height="8" rx="1.2"/></svg>';
+const WALK='<svg viewBox="0 0 24 24"><circle cx="13.5" cy="3.3" r="2.5"/><path d="M11.2 7.2c.6-.4 1.5-.5 2.3-.2l1.2.5 2.6 3.6-1.6 1.1-1.8-2.3-.9 3.8 2.9 3.2.3 6.1h-2.1l-.4-5-2.6-2.6-1.3 3.4-2.7 4.3-1.8-1.1 2.5-4.2L11 9.6l-1.7 1.3-.6 2.9-2-.4.8-3.8z"/></svg>';
+const KEYS=['CAR_RED','CAR_YELLOW','CAR_GREEN','PED_RED','PED_GREEN'];
+const PIN={CAR_RED:13,CAR_YELLOW:12,CAR_GREEN:11,PED_RED:10,PED_GREEN:9};
+const COL={CAR_RED:'#ff4d5e',CAR_YELLOW:'#ffc53d',CAR_GREEN:'#2fe69a',PED_RED:'#ff4d5e',PED_GREEN:'#2fe69a'};
+const DESC={CAR_RED:'Car red',CAR_YELLOW:'Car yellow',CAR_GREEN:'Car green',PED_RED:'People red',PED_GREEN:'People green'};
+function lightsHTML(size=''){
+  return `<div class="lights ${size}">
+   <div class="pole"><div class="lamp" data-k="CAR_RED" data-c="r"></div><div class="lamp" data-k="CAR_YELLOW" data-c="y"></div><div class="lamp" data-k="CAR_GREEN" data-c="g"></div><div class="lbl">CARS</div></div>
+   <div class="pole"><div class="lamp ped" data-k="PED_RED" data-c="r">${STAND}</div><div class="lamp ped" data-k="PED_GREEN" data-c="g">${WALK}</div><div class="lbl">PEOPLE</div></div></div>`;
+}
+function setLights(root,st){$$('.lamp',root).forEach(l=>l.classList.toggle('on',!!st[l.dataset.k]));const d=st.CAR_GREEN&&st.PED_GREEN;const L=$('.lights',root)||root;L.classList.toggle('danger',!!d);}
+const PHASES=[
+ {name:'🚗 Cars GO',st:{CAR_GREEN:1,PED_RED:1},ms:5000},
+ {name:'⚠️ Cars SLOW',st:{CAR_YELLOW:1,PED_RED:1},ms:2000},
+ {name:'✋ Everyone STOP',st:{CAR_RED:1,PED_RED:1},ms:1000},
+ {name:'🚶 People WALK',st:{CAR_RED:1,PED_GREEN:1},ms:5000},
+ {name:'✋ Everyone STOP',st:{CAR_RED:1,PED_RED:1},ms:1000}];
+function cycler(fn,scale=1){let i=0,t=null,on=false;function run(){if(!on)return;const p=PHASES[i];fn(p,i);t=setTimeout(()=>{i=(i+1)%PHASES.length;run();},p.ms*scale);}
+  return{start(){if(on)return;on=true;i=0;run();},stop(){on=false;clearTimeout(t);}};}
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function hl(src){
+  return src.replace(/(\/\/.*$|\/\*.*?\*\/)|(\{\{b\d+\}\})|\b(const|int|void)\b|\b(pinMode|digitalWrite|digitalwrite|delay|setup|loop)\b|\b(HIGH|LOW|OUTPUT)\b|\b([A-Z][A-Z_]{2,})\b|\b(\d+)\b|([&<>])/g,
+   (m,c,b,k,f,v,id,n,e)=>c?`<span class="c">${esc(c)}</span>`:b?b:k?`<span class="k">${k}</span>`:f?`<span class="f">${f}</span>`:v?`<span class="v">${v}</span>`:id?`<span class="id">${id}</span>`:n?`<span class="n">${n}</span>`:esc(e));
+}
+function buildCode(el,lines){el.innerHTML=lines.map((l,i)=>`<div class="ln" data-i="${i}"><span class="no">${i+1}</span><span class="tx">${hl(l)||' '}</span></div>`).join('');return $$('.ln',el);}
+const LOOP=[
+'void loop() {',
+'  // 1) Cars GO, people wait',
+'  digitalWrite(CAR_RED, LOW);',
+'  digitalWrite(CAR_GREEN, HIGH);',
+'  delay(5000);',
+'  // 2) Cars slow down',
+'  digitalWrite(CAR_GREEN, LOW);',
+'  digitalWrite(CAR_YELLOW, HIGH);',
+'  delay(2000);',
+'  // 3) Everyone STOP (safety gap)',
+'  digitalWrite(CAR_YELLOW, LOW);',
+'  digitalWrite(CAR_RED, HIGH);',
+'  delay(1000);',
+'  // 4) People WALK',
+'  digitalWrite(PED_RED, LOW);',
+'  digitalWrite(PED_GREEN, HIGH);',
+'  delay(5000);',
+'  // 5) People wait, then back to the top',
+'  digitalWrite(PED_GREEN, LOW);',
+'  digitalWrite(PED_RED, HIGH);',
+'  delay(1000);',
+'}'];
+function parseLine(l){let m;
+  if(/^\s*\/\//.test(l))return null;
+  if(m=l.match(/\bdigitalWrite\(\s*(\w+)\s*,\s*(HIGH|LOW)\s*\)/))return{t:'w',k:m[1],v:m[2]==='HIGH'?1:0};
+  if(m=l.match(/\b(digitalwrite)\b/))return{t:'e',word:m[1]};
+  if(m=l.match(/\bdelay\(\s*(\d+)\s*\)/))return{t:'d',ms:+m[1]};
+  if(/pinMode/.test(l))return{t:'s'};
+  return null;}
+
+/* ---------- copy helpers ---------- */
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true;}catch(e){}try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();if(ok)return true;}catch(e){}return false;}
+function manualCopy(t){$('#cpTa').value=t;$('#cpModal').classList.add('show');setTimeout(()=>$('#cpTa').select(),50);}
+$('#cpClose').onclick=()=>$('#cpModal').classList.remove('show');
+async function copyBtn(t,msgEl,ok){if(await copyText(t)){if(msgEl)msgEl.innerHTML=ok;}else manualCopy(t);}
+
+/* ---------- Breadboard ---------- */
+function makeBB(svg){
+  const X=c=>60+(c-1)*24,RY={a:86,b:106,c:126,d:146,e:166,f:214,g:234,h:254,i:274,j:294},RM=318,RP=336;
+  const PX={CAR_RED:100,CAR_YELLOW:130,CAR_GREEN:160,PED_RED:190,PED_GREEN:220},GX=70,PY=398;
+  let h=`<rect x="34" y="22" width="750" height="326" rx="14" fill="#efece3"/><rect x="34" y="182" width="750" height="16" fill="#dcd8cc"/>`;
+  h+=`<line x1="48" y1="${RM-9}" x2="770" y2="${RM-9}" stroke="#2f6fd6" stroke-width="2"/><line x1="48" y1="${RP+9}" x2="770" y2="${RP+9}" stroke="#d63a3a" stroke-width="2"/>`;
+  h+=`<line x1="48" y1="31" x2="770" y2="31" stroke="#2f6fd6" stroke-width="2"/><line x1="48" y1="67" x2="770" y2="67" stroke="#d63a3a" stroke-width="2"/>`;
+  h+=`<text x="40" y="${RM+5}" class="svgtxt" font-size="15" font-weight="700" fill="#2f6fd6">−</text><text x="40" y="${RP+5}" class="svgtxt" font-size="15" font-weight="700" fill="#d63a3a">+</text>`;
+  for(let c=1;c<=30;c++){const x=X(c);[40,58,RM,RP].forEach(y=>h+=`<rect x="${x-3.5}" y="${y-3.5}" width="7" height="7" rx="1.5" fill="#b9b5a8"/>`);
+    Object.values(RY).forEach(y=>h+=`<rect x="${x-3.5}" y="${y-3.5}" width="7" height="7" rx="1.5" fill="#b9b5a8"/>`);
+    if(c===1||c%5===0)h+=`<text x="${x}" y="80" text-anchor="middle" class="svgtxt" font-size="9" fill="#8a8678">${c}</text>`;}
+  Object.entries(RY).forEach(([r,y])=>h+=`<text x="46" y="${y+4}" text-anchor="middle" class="svgtxt" font-size="10" fill="#8a8678">${r}</text>`);
+  // arduino
+  h+=`<rect x="30" y="384" width="500" height="70" rx="10" fill="#00878f"/><rect x="54" y="390" width="186" height="16" rx="3" fill="#111"/>`;
+  [['GND',GX]].concat(KEYS.map(k=>[PIN[k],PX[k]])).forEach(([l,x])=>{h+=`<rect x="${x-4}" y="${PY-4}" width="8" height="8" fill="#d4a017"/><text x="${x}" y="424" text-anchor="middle" class="svgtxt mono" font-size="12" fill="#fff">${l}</text>`;});
+  h+=`<text x="400" y="426" text-anchor="middle" class="svgtxt" font-size="18" font-weight="700" fill="#fff">ARDUINO UNO</text><text x="146" y="446" text-anchor="middle" class="svgtxt" font-size="10" fill="#bfe9ea">DIGITAL PINS</text>`;
+  // GND wire
+  h+=`<path class="gndw" d="M${GX},${PY} V${RM} H${X(1)}" fill="none" stroke="#1d1d1d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  KEYS.forEach((k,i)=>{const b=3+6*i,c=COL[k],yk=358+i*6,ax=X(b+2),kx=X(b+3),dx=(ax+kx)/2;
+    h+=`<g class="bbch" data-k="${k}">`;
+    h+=`<text x="${(X(b)+kx)/2}" y="122" text-anchor="middle" class="svgtxt mono" font-size="11" font-weight="700" fill="${c==='#ffc53d'?'#b8860b':c}">${k}</text><text x="${(X(b)+kx)/2}" y="140" text-anchor="middle" class="svgtxt" font-size="11" fill="#6f6b5e">pin ${PIN[k]}</text>`;
+    // resistor 220 (red red brown gold)
+    h+=`<line x1="${X(b)}" y1="${RY.h}" x2="${X(b+2)}" y2="${RY.h}" stroke="#8d8d8d" stroke-width="2.5"/><rect x="${X(b)+8}" y="${RY.h-6}" width="${X(b+2)-X(b)-16}" height="12" rx="5" fill="#d9b27c"/>`;
+    [[12,'#c62828'],[17,'#c62828'],[22,'#6d4c41'],[30,'#c9a227']].forEach(([o,cc])=>h+=`<rect x="${X(b)+o}" y="${RY.h-6}" width="3" height="12" fill="${cc}"/>`);
+    // LED
+    h+=`<path d="M${ax},${RY.f} V204 l3,-4 V194" fill="none" stroke="#9a9a9a" stroke-width="2.5"/><path d="M${kx},${RY.f} V194" fill="none" stroke="#9a9a9a" stroke-width="2.5"/>`;
+    h+=`<circle class="dome" cx="${dx}" cy="184" r="14" fill="${c}" opacity=".45" stroke="${c}" stroke-width="2"/>`;
+    // wires
+    h+=`<path d="M${PX[k]},${PY} V${yk} H${X(b)} V${RY.j}" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    h+=`<path d="M${kx},${RY.j} C${kx+8},${RY.j+8} ${kx+8},${RM-8} ${kx},${RM}" fill="none" stroke="#1d1d1d" stroke-width="5" stroke-linecap="round"/>`;
+    h+=`<path class="flow" style="stroke:#ff8f00" d="M${PX[k]},${PY} V${yk} H${X(b)} V${RY.h} H${X(b+2)} V${RY.f} M${kx},${RY.f} V${RM} H${GX} V${PY}"/>`;
+    h+=`</g>`;});
+  // labels
+  h+=`<text x="${X(5)+12}" y="236" class="svgtxt" font-size="11" fill="#6f6b5e">220 Ω</text><text x="${X(5)}" y="208" text-anchor="end" class="svgtxt" font-size="10" fill="#6f6b5e">long (+)</text><text x="${X(6)+4}" y="208" class="svgtxt" font-size="10" fill="#6f6b5e">short (−)</text>`;
+  svg.innerHTML=h;
+  const G={};$$('.bbch',svg).forEach(g=>G[g.dataset.k]=g);
+  return{set(st){KEYS.forEach(k=>{const on=!!st[k],d=$('.dome',G[k]);d.setAttribute('opacity',on?1:.45);d.style.filter=on?`drop-shadow(0 0 8px ${COL[k]}) drop-shadow(0 0 16px ${COL[k]})`:'none';$('.flow',G[k]).classList.toggle('on',on);});},
+    focus(k){KEYS.forEach(x=>G[x].style.opacity=(!k||x===k)?1:.18);}};
+}
+function bbControls(box,bb){
+  let cyc=null;const btns=[['all','All'],...KEYS.map(k=>[k,DESC[k]]),['run','▶ Run sequence']];
+  box.innerHTML=btns.map(([k,l])=>`<button data-k="${k}">${COL[k]?`<span class="dotc" style="background:${COL[k]}"></span>`:''}${l}</button>`).join('');
+  const B=$$('button',box);
+  function stop(){if(cyc){cyc.stop();cyc=null;}}
+  function sel(k){B.forEach(b=>b.classList.toggle('on',b.dataset.k===k));}
+  B.forEach(b=>b.onclick=()=>{const k=b.dataset.k;stop();
+    if(k==='run'){bb.focus(null);sel('run');cyc=cycler(p=>bb.set(p.st),0.6);cyc.start();}
+    else if(k==='all'){bb.focus(null);bb.set({});sel('all');}
+    else{bb.focus(k);bb.set({[k]:1});sel(k);}});
+  return{reset(){stop();bb.focus(null);bb.set({});sel('all');},stop};
+}
+const bb1=bbControls($('#bb1c'),makeBB($('#bb1'))),bb2=bbControls($('#bb2c'),makeBB($('#bb2')));
+
+/* ---------- Simulator ---------- */
+class Sim{
+  constructor(o){Object.assign(this,o);this.speed=1;this.tok=0;this.load(this.lines);}
+  load(lines){this.lines=lines;this.rows=buildCode(this.codeEl,lines);this.prog=lines.map(parseLine);if(this.onRows)this.onRows(this.rows);this.reset();}
+  firstExec(f){for(let i=f;i<this.prog.length;i++)if(this.prog[i])return i;return -1;}
+  loopStart(){const li=this.lines.findIndex(l=>/void\s+loop/.test(l));return this.firstExec(li<0?0:li);}
+  reset(){this.tok++;this.playing=false;this.busy=false;this.err=false;this.st=Object.assign({},this.initSt||{});this.ptr=this.firstExec(0);this.mark(-1);this.render();this.say(this.readyMsg||'Ready! Press <b>▶ Play</b> or <b>⏭ Step</b>.');this.setBar(0);this.ui();this.statusEl.classList.remove('err');}
+  mark(i){this.rows.forEach((r,j)=>r.classList.toggle('cur',j===i));}
+  render(){setLights(this.lightsEl,this.st);}
+  say(h,cls){this.statusEl.innerHTML=h;}
+  setBar(p){if(this.barEl)this.barEl.style.width=(p*100)+'%';}
+  ui(){if(this.playBtn)this.playBtn.textContent=this.playing?'⏸ Pause':'▶ Play';}
+  wait(ms,bar){const tk=this.tok;return new Promise(res=>{const t0=performance.now();const f=now=>{if(tk!==this.tok)return res(false);const p=Math.min(1,(now-t0)/ms);if(bar)this.setBar(p);if(p>=1)return res(true);requestAnimationFrame(f);};requestAnimationFrame(f);});}
+  async step(){
+    if(this.busy||this.err||this.ptr<0)return;this.busy=true;const tk=this.tok;
+    const i=this.ptr,p=this.prog[i];this.mark(i);this.setBar(0);
+    if(p.t==='w'){this.st[p.k]=p.v;this.render();const su=/void setup/.test(this.lines[i])?'<code>setup()</code> runs <b>once</b>: ':'';this.say(`Line ${i+1}: ${su}<code>${p.k}</code> → ${p.v?'<span class="on">ON 💡</span>':'<span class="off">OFF</span>'}`);if(!su&&!p.v){const nx=this.prog[this.firstExec(i+1)];if(nx&&nx.t==='w'&&nx.v)this.say(this.statusEl.innerHTML+'<br><span style="font-size:15px;color:var(--muted)">Old light OFF first. On a real Arduino the next line runs only ~4 µs later, too fast to see!</span>');}await this.wait(this.playing?(su?900:p.v?260:160)/this.speed:180,false);}
+    else if(p.t==='d'){this.say(`Line ${i+1}: ⏳ <b>Waiting ${p.ms/1000} s…</b> nothing changes while we wait.`);await this.wait(this.playing?p.ms/this.speed:Math.min(1400,p.ms/2),true);}
+    else if(p.t==='s'){this.say('<code>setup()</code> runs <b>once</b>: all 5 pins become OUTPUT.');await this.wait(this.playing?900/this.speed:200,false);}
+    else if(p.t==='e'){this.err=true;this.playing=false;this.ui();this.statusEl.classList.add('err');this.say(`❌ <b>Error on line ${i+1}:</b> <code>'${p.word}' was not declared in this scope</code>. The code won't even upload!`);this.busy=false;if(this.onError)this.onError(i);return;}
+    if(tk!==this.tok)return;
+    let n=this.firstExec(i+1);if(n<0){n=this.loopStart();if(this.loopEl){this.loopEl.classList.add('show');setTimeout(()=>this.loopEl&&this.loopEl.classList.remove('show'),1600);}}
+    this.ptr=n;this.busy=false;
+  }
+  async play(){if(this.playing){this.playing=false;this.ui();return;}if(this.err)this.reset();this.playing=true;this.ui();const tk=this.tok;while(this.playing&&tk===this.tok&&!this.err){await this.step();if(this.busy)await this.wait(30);}this.ui();}
+  pause(){this.playing=false;this.ui();}
+}
+
+/* ---------- 0 title ---------- */
+$('#titleLights').innerHTML=lightsHTML('lg');
+const titleCyc=cycler(p=>setLights($('#titleLights'),p.st),0.5);
+
+/* ---------- concept taps ---------- */
+(function(){
+  const d=$('#wDig'),o=$('#wOut'),q=$('#wSeq');let t=null,step=0;
+  d.onclick=()=>d.classList.toggle('on');
+  o.onclick=()=>{clearTimeout(t);if(o.classList.contains('lit')){o.classList.remove('lit','send');return;}o.classList.remove('send');void o.offsetWidth;o.classList.add('send');t=setTimeout(()=>o.classList.add('lit'),780);};
+  const S=$$('.sq span',q);
+  q.onclick=()=>{if(step>=3){step=0;S.forEach(x=>x.className=x.className.replace(/ ?(lit|done)/g,''));return;}S.forEach((x,i)=>{x.classList.toggle('lit',i===step);x.classList.toggle('done',i<step);});step++;};
+  window.__concept={enter(){clearTimeout(t);d.classList.remove('on');o.classList.remove('lit','send');step=0;S.forEach(x=>x.classList.remove('lit','done'));}};
+})();
+
+/* ---------- 1 warm-up flips ---------- */
+function flips(el,data){el.innerHTML=data.map((d,i)=>`<div class="flip"><div class="in"><div class="fa"><div class="num">QUESTION ${i+1}</div><div class="q">${d[0]}</div><div class="tap">tap to flip ↻</div></div><div class="fb"><div class="num" style="color:var(--grn)">ANSWER</div><div class="a">${d[1]}</div></div></div></div>`).join('');
+  $$('.flip',el).forEach(f=>f.onclick=()=>f.classList.toggle('on'));}
+flips($('#flips'),[
+ ['What does <code>setup()</code> do?','Runs <b>once</b> when the Arduino starts. We set up the pins here.'],
+ ['What does <code>loop()</code> do?','Repeats <b>forever</b>, top to bottom, again and again. 🔁'],
+ ['<code>delay(1000)</code> waits for…?','1000 milliseconds = <b>1 second</b> ⏱️'],
+ ['<code>digitalWrite(13, HIGH)</code> means…?','Send power (5 V) to <b>pin 13</b>, so the LED turns <b>ON</b> 💡']]);
+flips($('#exitFlips'),[
+ ['Why do we have an <b>everyone-red</b> step?','A <b>safety gap</b>: it gives a late car time to stop before people walk.'],
+ ['What does <code>const int PED_GREEN = 9;</code> mean?','<b>PED_GREEN</b> is a name for <b>pin 9</b>, and it never changes.'],
+ ['You move the people-green LED to pin 5. How many lines change?','Just <b>one</b>: the <code>const</code> line! 😎']]);
+
+/* ---------- 2 hook street ---------- */
+(function(){
+  const svg=$('#street');let h='';
+  h+=`<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1430"/><stop offset="1" stop-color="#1a2348"/></linearGradient></defs>`;
+  h+=`<rect width="1160" height="400" fill="url(#sky)"/>`;
+  const bl=[[20,90,30],[120,70,48],[210,110,22],[340,80,40],[440,60,52],[760,100,28],[870,70,46],[980,120,20],[1080,80,40]];
+  bl.forEach(([x,w,y])=>{h+=`<rect x="${x}" y="${y}" width="${w}" height="${82-y+0}" fill="#141c38"/>`;for(let yy=y+10;yy<74;yy+=16)for(let xx=x+10;xx<x+w-10;xx+=18)if(Math.random()>.45)h+=`<rect x="${xx}" y="${yy}" width="8" height="8" fill="#ffd56b" opacity=".55"/>`;});
+  h+=`<rect x="0" y="82" width="1160" height="36" fill="#2a3150"/><rect x="0" y="288" width="1160" height="40" fill="#2a3150"/><rect x="0" y="328" width="1160" height="72" fill="#0f2a22"/>`;
+  h+=`<rect x="0" y="118" width="1160" height="170" fill="#151926"/>`;
+  for(let x=0;x<1160;x+=70)h+=`<rect x="${x}" y="201" width="38" height="5" fill="#c9b458" opacity=".7"/>`;
+  for(let i=0;i<7;i++)h+=`<rect x="600" y="${124+i*24}" width="110" height="14" fill="#e9edf7" opacity=".9"/>`;
+  h+=`<rect x="582" y="208" width="6" height="80" fill="#fff"/>`;
+  // car light (top sidewalk)
+  h+=`<rect x="536" y="70" width="8" height="48" fill="#3a4466"/><rect x="522" y="4" width="36" height="88" rx="10" fill="#070a14" stroke="#2a3558" stroke-width="2"/>
+      <circle class="sl r" data-k="CAR_RED" cx="540" cy="22" r="11"/><circle class="sl y" data-k="CAR_YELLOW" cx="540" cy="48" r="11"/><circle class="sl g" data-k="CAR_GREEN" cx="540" cy="74" r="11"/>`;
+  // ped light (bottom sidewalk)
+  h+=`<rect x="756" y="296" width="8" height="70" fill="#3a4466"/><rect x="741" y="300" width="38" height="70" rx="9" fill="#070a14" stroke="#2a3558" stroke-width="2"/>
+      <rect class="sl r" data-k="PED_RED" x="749" y="307" width="22" height="24" rx="5"/><rect class="sl g" data-k="PED_GREEN" x="749" y="339" width="22" height="24" rx="5"/>`;
+  // car
+  h+=`<g id="car"><rect x="0" y="18" width="140" height="34" rx="12" fill="#5cc8ff"/><path d="M28 18 L46 0 H98 L118 18 Z" fill="#3aa8e0"/><rect x="50" y="4" width="22" height="13" rx="3" fill="#0d1430"/><rect x="76" y="4" width="22" height="13" rx="3" fill="#0d1430"/><circle cx="32" cy="54" r="12" fill="#111"/><circle cx="110" cy="54" r="12" fill="#111"/><circle cx="32" cy="54" r="5" fill="#666"/><circle cx="110" cy="54" r="5" fill="#666"/><rect x="132" y="26" width="10" height="9" rx="3" fill="#fff6b0"/></g>`;
+  // ped
+  h+=`<g id="ped"><circle cx="0" cy="-46" r="9" fill="#ffcf9e"/><line id="pBody" x1="0" y1="-36" x2="0" y2="-14" stroke="#a78bfa" stroke-width="9" stroke-linecap="round"/><line id="pL1" x1="0" y1="-14" x2="-6" y2="0" stroke="#3b4a7a" stroke-width="6" stroke-linecap="round"/><line id="pL2" x1="0" y1="-14" x2="6" y2="0" stroke="#3b4a7a" stroke-width="6" stroke-linecap="round"/><line id="pA1" x1="0" y1="-32" x2="-8" y2="-20" stroke="#ffcf9e" stroke-width="5" stroke-linecap="round"/><line id="pA2" x1="0" y1="-32" x2="8" y2="-20" stroke="#ffcf9e" stroke-width="5" stroke-linecap="round"/></g>`;
+  svg.innerHTML=h;
+  const car=$('#car',svg),ped=$('#ped',svg),L1=$('#pL1',svg),L2=$('#pL2',svg),A1=$('#pA1',svg),A2=$('#pA2',svg),tag=$('#phaseTag'),db=$('#dangerBox');
+  let mode='normal',raf=null,cx=-160,py=318,pdir=-1,pwalk=false,st={},ph=0,phT=0,frozen=false,t=0,pedArmed=false,phN=0,walkedN=-1;
+  const STOPX=580,TOP=104,BOT=318;
+  function setSt(s){st=s;$$('.sl',svg).forEach(c=>c.classList.toggle('on',!!s[c.dataset.k]));}
+  function reset(){cx=-160;py=BOT;pdir=-1;pwalk=false;frozen=false;ph=0;phT=performance.now();db.classList.remove('show');pedArmed=false;
+    if(mode==='normal'){setSt(PHASES[0].st);tag.textContent=PHASES[0].name;}else{setSt({CAR_GREEN:1,PED_GREEN:1});tag.textContent='💥 Broken: both green!';}draw();}
+  function draw(){car.setAttribute('transform',`translate(${cx},222)`);ped.setAttribute('transform',`translate(655,${py})`);
+    const s=pwalk?Math.sin(t/5)*7:0;L1.setAttribute('x2',-6+s);L2.setAttribute('x2',6-s);A1.setAttribute('x2',-8-s);A2.setAttribute('x2',8+s);}
+  function frame(now){raf=requestAnimationFrame(frame);if(frozen)return;t++;
+    if(mode==='normal'&&now-phT>PHASES[ph].ms){ph=(ph+1)%PHASES.length;phN++;phT=now;setSt(PHASES[ph].st);tag.textContent=PHASES[ph].name;}
+    const go=!!st.CAR_GREEN,front=cx+140,v=3.2;
+    if(!go&&front<=STOPX&&front+v>STOPX){cx=STOPX-140;}else if(!go&&front<=STOPX&&front>STOPX-6){}else cx+=v;
+    if(cx>1200)cx=-200;
+    const canWalk=mode==='normal'?(!!st.PED_GREEN&&walkedN!==phN):(cx>330||pedArmed);
+    if(mode!=='normal'&&cx>330)pedArmed=true;
+    if(!pwalk&&canWalk){pwalk=true;walkedN=phN;}
+    if(pwalk){py+=pdir*1.6;if(pdir<0&&py<=TOP){py=TOP;pdir=1;pwalk=false;}else if(pdir>0&&py>=BOT){py=BOT;pdir=-1;pwalk=false;}
+      if(mode==='normal'&&!st.PED_GREEN&&(py===TOP||py===BOT))pwalk=false;}
+    if(mode!=='normal'&&cx<655&&cx+140>655&&py>200&&py<300){frozen=true;db.classList.add('show');}
+    draw();}
+  window.__hook={enter(){reset();if(!raf)raf=requestAnimationFrame(frame);},leave(){cancelAnimationFrame(raf);raf=null;}};
+  $('#hkNormal').onclick=()=>{mode='normal';reset();};
+  $('#hkBroken').onclick=()=>{mode='broken';reset();};
+  $('#hkReset').onclick=()=>reset();
+})();
+
+/* ---------- 3 order ---------- */
+(function(){
+  const cards=[{id:3,t:'🚶 People WALK',st:{CAR_RED:1,PED_GREEN:1}},{id:0,t:'🚗 Cars GO',st:{CAR_GREEN:1,PED_RED:1}},{id:2,t:'✋ Everyone STOP',st:{CAR_RED:1,PED_RED:1}},{id:1,t:'⚠️ Cars SLOW DOWN',st:{CAR_YELLOW:1,PED_RED:1}}];
+  const wrap=$('#ocards');wrap.innerHTML=cards.map(c=>`<div class="ocard" data-id="${c.id}"><div class="badge"></div>${lightsHTML('xs')}<div class="t">${c.t}</div></div>`).join('');
+  const els=$$('.ocard',wrap);els.forEach((e,i)=>setLights(e,cards[i].st));
+  let seq=[];const msg=$('#oMsg');
+  els.forEach(e=>e.onclick=()=>{if(e.classList.contains('picked'))return;seq.push(e);e.classList.add('picked');$('.badge',e).textContent=seq.length;});
+  $('#oReset').onclick=()=>{seq=[];els.forEach(e=>{e.className='ocard';$('.badge',e).textContent='';});msg.textContent='';msg.className='msg';};
+  $('#oCheck').onclick=()=>{if(seq.length<4){msg.textContent='Tap all 4 cards first 👆';msg.className='msg no';return;}
+    let ok=true;seq.forEach((e,i)=>{const g=+e.dataset.id===i;ok=ok&&g;e.classList.add(g?'good':'bad');});
+    msg.innerHTML=ok?'🎉 Perfect! GO → SLOW → STOP → WALK… then STOP again and repeat.':'Not quite. Where does the safety STOP go? Try again!';msg.className='msg '+(ok?'ok':'no');};
+})();
+
+/* ---------- 4 LED circuit ---------- */
+(function(){
+  const s=$('#ledSvg');
+  s.innerHTML=`<rect x="14" y="70" width="128" height="200" rx="16" fill="#0f5aa8"/><text x="78" y="110" text-anchor="middle" class="svgtxt" font-size="17" font-weight="600" fill="#fff">ARDUINO</text>
+   <rect x="128" y="128" width="20" height="24" rx="3" fill="#111"/><text x="112" y="146" text-anchor="end" class="svgtxt mono" font-size="16" fill="#ffcb6b">PIN 13</text>
+   <rect x="68" y="256" width="24" height="20" rx="3" fill="#111"/><text x="80" y="246" text-anchor="middle" class="svgtxt mono" font-size="15" fill="#ffcb6b">GND</text>
+   <text id="vLbl" x="190" y="122" text-anchor="middle" class="svgtxt mono" font-size="20" fill="#ffc53d">0 V</text>
+   <path class="wire" d="M148,140 H230 l10,-16 l20,32 l20,-32 l20,32 l20,-32 l10,16 H436 M504,140 H572 V306 H80 V276"/>
+   <path class="flow" id="ledFlow" d="M148,140 H230 l10,-16 l20,32 l20,-32 l20,32 l20,-32 l10,16 H436 M504,140 H572 V306 H80 V276"/>
+   <text x="280" y="102" text-anchor="middle" class="svgtxt" font-size="17">220 Ω resistor</text>
+   <circle id="ledGlow" cx="470" cy="140" r="54" fill="#ff4d5e" opacity="0"/>
+   <circle id="ledC" class="ledc" cx="470" cy="140" r="32" fill="#4a1a22" stroke="#ff8a95" stroke-width="3"/>
+   <text x="448" y="92" text-anchor="end" class="svgtxt" font-size="15" fill="#ffc53d">+ long leg</text><text x="494" y="92" text-anchor="start" class="svgtxt" font-size="15" fill="#5cc8ff">− short leg</text>
+   <text x="320" y="332" text-anchor="middle" class="svgtxt" font-size="15" fill="#93a0c4">current goes back home through GND</text>`;
+  let on=false;const b=$('#ledBtn');
+  function r(){$('#ledFlow',s).classList.toggle('on',on);$('#ledC',s).setAttribute('fill',on?'#ff4d5e':'#4a1a22');$('#ledC',s).style.filter=on?'drop-shadow(0 0 14px #ff4d5e)':'none';$('#ledGlow',s).setAttribute('opacity',on?.25:0);$('#vLbl',s).textContent=on?'5 V':'0 V';
+    b.textContent=on?'digitalWrite(13, LOW)':'digitalWrite(13, HIGH)';b.className='btn '+(on?'':'ylw');}
+  b.onclick=()=>{on=!on;r();};r();
+})();
+
+/* ---------- 5 wiring map ---------- */
+(function(){
+  const rows=KEYS.map(k=>`<tr><td><span class="dot" style="background:${COL[k]};box-shadow:0 0 10px ${COL[k]}"></span>${DESC[k]}</td><td class="nm">${k}</td><td style="white-space:nowrap">Pin <span class="pin">${PIN[k]}</span></td></tr>`).join('');
+  $('#mapTable').innerHTML=rows+`<tr><td colspan="3" style="color:var(--muted);font-size:16px">Each pin → 220 Ω → <b style="color:var(--yel)">long leg</b>. All short legs → (−) rail → Arduino <b style="color:#ffcb6b">GND</b></td></tr>`;
+  const s=$('#mapSvg');let h=`<rect x="10" y="20" width="112" height="365" rx="14" fill="#0f5aa8"/><text x="50" y="205" class="svgtxt" font-size="16" font-weight="600" fill="#fff" transform="rotate(-90 50 205)" text-anchor="middle">ARDUINO UNO</text>`;
+  const Y=[50,110,170,230,290];
+  KEYS.forEach((k,i)=>{const y=Y[i];h+=`<rect x="112" y="${y-9}" width="18" height="18" rx="3" fill="#111"/><text x="104" y="${y+6}" text-anchor="end" class="svgtxt mono" font-size="16" fill="#ffcb6b">${PIN[k]}</text>
+    <path class="wire" d="M130,${y} H200 l8,-10 l14,20 l14,-20 l14,20 l14,-20 l8,10 H334 M366,${y} H470"/>
+    <path class="flow" data-k="${k}" style="stroke:${COL[k]}" d="M130,${y} H200 l8,-10 l14,20 l14,-20 l14,20 l14,-20 l8,10 H334 M366,${y} H470"/>
+    <circle class="ledc" data-k="${k}" cx="350" cy="${y}" r="16" fill="${COL[k]}33" stroke="${COL[k]}" stroke-width="3"/>
+    <text x="490" y="${y+6}" class="svgtxt mono" font-size="14" fill="${COL[k]}">${k}</text>`;});
+  h+=`<rect x="112" y="341" width="18" height="18" rx="3" fill="#111"/><text x="104" y="356" text-anchor="end" class="svgtxt mono" font-size="15" fill="#ffcb6b">GND</text>
+   <path class="wire" d="M470,40 V350 H130" style="stroke:#5cc8ff"/><text x="300" y="376" text-anchor="middle" class="svgtxt" font-size="14" fill="#5cc8ff">(−) GND rail: every short leg joins here</text>`;
+  s.innerHTML=h;
+  const cyc=cycler(p=>{$$('[data-k]',s).forEach(e=>{const on=!!p.st[e.dataset.k];if(e.tagName==='circle'){e.setAttribute('fill',on?COL[e.dataset.k]:COL[e.dataset.k]+'33');e.style.filter=on?`drop-shadow(0 0 10px ${COL[e.dataset.k]})`:'none';}else e.classList.toggle('on',on);});},0.6);
+  window.__map=cyc;
+})();
+
+/* ---------- 6 constants ---------- */
+(function(){
+  let named=false;const code=$('#cCode'),who=$('#phWho'),av=$('#phAv');
+  function r(){code.innerHTML=`<span class="f">digitalWrite</span>(<span class="swap">${named?'<span class="id">CAR_RED</span>':'<span class="n">13</span>'}</span>, <span class="v">HIGH</span>);`;
+    who.textContent=named?'Mom 💛':'0551 234 567';who.classList.toggle('numb',!named);av.textContent=named?'👩':'📞';$('#cBtn').textContent=named?'🔢 Back to numbers':'🏷️ Give it a name';}
+  $('#cBtn').onclick=()=>{named=!named;r();};$('#cAnat').onclick=()=>$('#anat').classList.toggle('show');r();
+  window.__const={enter(){named=false;r();$('#anat').classList.remove('show');}};
+})();
+
+/* ---------- 7 change one line ---------- */
+(function(){
+  let mode='name',pin=13,prev=13;const el=$('#chCode');
+  function lines(){const P=mode==='name'?'CAR_RED':String(pin);const out=[];if(mode==='name'){out.push(`const int CAR_RED = ${pin};`,'');}out.push('void setup() {',`  pinMode(${P}, OUTPUT);`,'}','void loop() {',`  digitalWrite(${P}, HIGH);`,'  delay(1000);',`  digitalWrite(${P}, LOW);`,'  delay(1000);','}');return out;}
+  function r(changed){const L=lines();const rows=buildCode(el,L);let n=0;
+    rows.forEach((row,i)=>{const t=L[i];if(mode==='name'){if(/^const/.test(t)&&changed){row.classList.add('flash');n++;}else if(/CAR_RED/.test(t)&&!/^const/.test(t)&&changed)row.classList.add('glow');}
+      else if(new RegExp(`\\(${pin},`).test(t)&&changed){row.classList.add('flash');n++;}});
+    $('#chCount').innerHTML=changed?`Lines you edited: <b style="color:${n>1?'var(--red)':'var(--grn)'}">${n}</b> ${n>1?'😩':'😎'}`:'Lines you edited: 0';
+    $('#chNote').innerHTML=!changed?'Pick a new pin and watch which lines must change.':mode==='name'?'Only the <b>const</b> line changed. The green lines follow the name automatically ✨':'You had to hunt down <b>every</b> 13 in the program. Miss one and the LED breaks!';}
+  $$('#chMode button').forEach(b=>b.onclick=()=>{$$('#chMode button').forEach(x=>x.classList.toggle('on',x===b));mode=b.dataset.m;pin=13;$$('#chPin button').forEach(x=>x.classList.toggle('on',x.dataset.p==='13'));r(false);});
+  $$('#chPin button').forEach(b=>b.onclick=()=>{$$('#chPin button').forEach(x=>x.classList.toggle('on',x===b));const np=+b.dataset.p;const ch=np!==pin;pin=np;r(ch);});
+  r(false);
+})();
+
+/* ---------- 8 simulator ---------- */
+$('#simLights').innerHTML=lightsHTML('sm');
+const sim=new Sim({codeEl:$('#simCode'),lightsEl:$('#simLights'),statusEl:$('#simStatus'),barEl:$('#simBar'),playBtn:$('#simPlay'),loopEl:$('#simLoop'),
+  lines:['void setup() { /* 5x pinMode */ digitalWrite(PED_RED, HIGH); }'].concat(LOOP)});
+$('#simPlay').onclick=()=>sim.play();
+$('#simStep').onclick=()=>{if(sim.playing)sim.pause();sim.step();};
+$('#simReset').onclick=()=>sim.reset();
+$$('#simSpd button').forEach(b=>b.onclick=()=>{$$('#simSpd button').forEach(x=>x.classList.toggle('on',x===b));sim.speed=+b.dataset.s;});
+
+/* ---------- 9 timeline ---------- */
+(function(){
+  const BARS={CAR_RED:[[7,14]],CAR_YELLOW:[[5,7]],CAR_GREEN:[[0,5]],PED_RED:[[0,8],[13,14]],PED_GREEN:[[8,13]]};const W=840/14;
+  let h='';KEYS.forEach(k=>{h+=`<div class="tlrow"><div class="lab">${k}</div><div class="track">${BARS[k].map(([a,b])=>`<div class="bar" style="left:${a*W}px;width:${(b-a)*W}px;background:${COL[k]};box-shadow:0 0 12px ${COL[k]}88"></div>`).join('')}${[[7,8],[13,14]].map(([a,b])=>`<div class="gap" style="left:${a*W}px;width:${(b-a)*W}px"></div>`).join('')}</div></div>`;});
+  h+=`<div class="axis">${Array.from({length:15},(_,i)=>`<span>${i}s</span>`).join('')}</div><div class="playhead" id="ph"></div>`;
+  $('#tl').innerHTML=h;$('#tlLights').innerHTML=lightsHTML('sm');
+  let raf=null,t0=0;function f(now){raf=requestAnimationFrame(f);const t=((now-t0)/1000)%14;$('#ph').style.left=(190+t*W)+'px';const st={};KEYS.forEach(k=>BARS[k].forEach(([a,b])=>{if(t>=a&&t<b)st[k]=1;}));setLights($('#tlLights'),st);}
+  window.__tl={enter(){t0=performance.now();if(!raf)raf=requestAnimationFrame(f);},leave(){cancelAnimationFrame(raf);raf=null;}};
+})();
+
+/* ---------- 10 predict ---------- */
+(function(){
+  const rounds=[7,11,15];let r=0,revealed=false;const rows=buildCode($('#prCode'),LOOP);
+  $('#prLights').innerHTML=lightsHTML('pick');const L=$('#prLights');
+  function actual(stop){const st={PED_RED:1};for(let i=0;i<=stop;i++){const p=parseLine(LOOP[i]);if(p&&p.t==='w')st[p.k]=p.v;}return st;}
+  function show(){revealed=false;rows.forEach((x,i)=>x.classList.toggle('stop',i===rounds[r]));$$('.lamp',L).forEach(l=>l.classList.remove('on','right','wrong'));$('#prRound').textContent=`Round ${r+1} of 3`;$('#prMsg').textContent='';$('#prMsg').className='msg';$('.lights',L).classList.remove('danger');}
+  $$('.lamp',L).forEach(l=>l.onclick=()=>{if(!revealed)l.classList.toggle('on');});
+  $('#prReveal').onclick=()=>{if(revealed)return;revealed=true;const a=actual(rounds[r]);let wrong=0;
+    $$('.lamp',L).forEach(l=>{const guess=l.classList.contains('on'),real=!!a[l.dataset.k];if(guess!==real)wrong++;l.classList.toggle('on',real);l.classList.add(guess===real?'right':'wrong');});
+    $('#prMsg').innerHTML=wrong?`${wrong} light${wrong>1?'s':''} wrong. Read the lines above the 🛑 again!`:'🎯 Perfect prediction!';$('#prMsg').className='msg '+(wrong?'no':'ok');};
+  $('#prNext').onclick=()=>{r=(r+1)%rounds.length;show();};
+  window.__pred={enter(){r=0;show();}};show();
+})();
+
+/* ---------- 11 bug hunt ---------- */
+(function(){
+  const B=[
+   {i:6,to:'  digitalWrite(CAR_GREEN, HIGH);',clue:'🚨 Neighbours say: <b>“Both greens were on together. Someone nearly got hit!”</b>',fix:'Line 7 should be <code>LOW</code>. Car green never turned OFF, so cars still had green while people walked! 😱'},
+   {i:14,to:'  digitalwrite(PED_RED, LOW);',clue:'🚨 The code <b>won\'t even upload</b>. Arduino shows a red error message.',fix:'Line 15: <code>digitalwrite</code> needs a capital <b>W</b>: <code>digitalWrite</code>. The Arduino is <b>case-sensitive</b>!'},
+   {i:16,to:'  delay(500);',clue:'🚨 Grandma complains: <b>“The walk light was gone before I even stepped off the pavement!”</b>',fix:'Line 17: <code>delay(500)</code> is only <b>half a second</b>! It should be <code>delay(5000)</code> (5 seconds).'}];
+  let r=0,found=false;$('#bgLights').innerHTML=lightsHTML('sm');
+  const sim=new Sim({codeEl:$('#bgCode'),lightsEl:$('#bgLights'),statusEl:$('#bgStatus'),lines:LOOP,initSt:{PED_RED:1},readyMsg:'Tap the line you think has the bug 🐞',
+    onRows:rows=>rows.forEach((row,i)=>row.onclick=()=>pick(row,i))});
+  function build(){const L=LOOP.slice();L[B[r].i]=B[r].to;found=false;sim.load(L);$('#bgTitle').textContent=`Round ${r+1} of 3`;$('#bgClue').innerHTML=B[r].clue;}
+  function pick(row,i){if(found)return;if(i===B[r].i){found=true;row.classList.add('found');sim.say('✅ <b>Found it!</b> '+B[r].fix);}else{row.classList.remove('shake');void row.offsetWidth;row.classList.add('shake');sim.say('Not this one. Look again 👀');}}
+  $('#bgRun').onclick=()=>{const keep=found;sim.reset();if(keep){found=true;sim.rows[B[r].i].classList.add('found');}sim.speed=2;sim.play();};
+  $('#bgNext').onclick=()=>{r=(r+1)%B.length;build();};
+  window.__bug={enter(){r=0;build();},leave(){sim.reset();}};build();
+})();
+
+/* ---------- teams ---------- */
+(function(){
+  const DEF=['Omar','Sattam','Layan','Jehad'];
+  let names=DEF.slice();try{const v=JSON.parse(localStorage.getItem('l02names')||'null');if(Array.isArray(v)&&v.length)names=v;}catch(e){}
+  let teams=[],swap=0;const RL={B:'🔧 Builder',T:'🧪 Tester',C:'💻 Coder',N:'📓 Notebooker'};
+  const sets=n=>n===3?[['B'],['C'],['T','N']]:n===1?[['B','T','C','N']]:[['B','T'],['C','N']];
+  function make(l){const t=[];for(let i=0;i<l.length;i+=2)t.push(l.slice(i,i+2));if(t.length>1&&t[t.length-1].length===1)t[t.length-2].push(t.pop()[0]);return t;}
+  function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  function paint(anim){const el=$('#teams');el.innerHTML=teams.map((t,ti)=>{const rs=sets(t.length);return `<div class="team"><div class="tn">TEAM ${ti+1}</div>${t.map((n,mi)=>`<div class="mem"><span class="nm2">${esc(n)}</span><span class="rl">${rs[(mi+swap)%rs.length].map(k=>RL[k]).join('<br>')}</span></div>`).join('')}</div>`;}).join('')||'<div class="note">Add names with ✏️ Edit names</div>';
+    if(anim)$$('.team',el).forEach(c=>c.classList.add('land'));}
+  teams=make(names);paint();
+  $('#tmSpin').onclick=()=>{let k=0;const iv=setInterval(()=>{teams=make(shuffle(names));paint();if(++k>10){clearInterval(iv);swap=0;teams=make(shuffle(names));paint(true);}},90);};
+  $('#tmSwap').onclick=()=>{swap++;paint(true);};
+  $('#tmEdit').onclick=()=>{$('#tmTa').value=names.join('\n');$('#tmModal').classList.add('show');setTimeout(()=>$('#tmTa').focus(),50);};
+  $('#tmCancel').onclick=()=>$('#tmModal').classList.remove('show');
+  $('#tmSave').onclick=()=>{const n=$('#tmTa').value.split('\n').map(x=>x.trim()).filter(Boolean);names=n.length?n:DEF.slice();try{localStorage.setItem('l02names',JSON.stringify(names));}catch(e){}swap=0;teams=make(names);paint(true);$('#tmModal').classList.remove('show');};
+})();
+
+/* ---------- blink try ---------- */
+(function(){
+  const BL=['void setup() {','  pinMode(13, OUTPUT);','}','','void loop() {','  digitalWrite(13, HIGH);  // ON','  delay(1000);             // wait 1 s','  digitalWrite(13, LOW);   // OFF','  delay(1000);             // wait 1 s','}'];
+  buildCode($('#blinkCode'),BL);
+  $('#blinkCopy').onclick=()=>copyBtn(BL.join('\n')+'\n',$('#blinkMsg'),'📋 <b style="color:var(--grn)">Copied!</b> Tinkercad: Code → Text → paste → Start Simulation');
+})();
+
+/* ---------- where names live ---------- */
+(function(){
+  const GOOD=['// ① NAMES: at the very top','const int CAR_RED   = 13;','const int PED_GREEN = 9;','','// ② setup(): runs ONCE','void setup() {','  pinMode(CAR_RED, OUTPUT);','  pinMode(PED_GREEN, OUTPUT);','}','','// ③ loop(): repeats FOREVER','void loop() {','  digitalWrite(CAR_RED, HIGH);','  delay(1000);','}'];
+  const BAD=['void setup() {','  pinMode(CAR_RED, OUTPUT);    // ❌ ???','  pinMode(PED_GREEN, OUTPUT);  // ❌ ???','}','','void loop() {','  const int CAR_RED   = 13;  // hidden in here','  const int PED_GREEN = 9;   // hidden in here','  digitalWrite(CAR_RED, HIGH);','  delay(1000);','}'];
+  const Z=[[0,2,'z1'],[4,8,'z2'],[10,14,'z3']];let bad=false,tm=[];const el=$('#whCode');
+  function clr(){tm.forEach(clearTimeout);tm=[];}
+  function draw(){const rows=buildCode(el,bad?BAD:GOOD);
+    if(bad){rows.forEach((r,i)=>{if(i===1||i===2)r.classList.add('bad');if(i===6||i===7)r.classList.add('stop');});}
+    else Z.forEach(([a,b,z])=>{for(let i=a;i<=b;i++)rows[i].classList.add(z);});
+    $('#whErr').classList.toggle('show',bad);$$('.wh-hide').forEach(c=>c.style.display=bad?'none':'');$('#whBad').textContent=bad?'✅ Back to the right way':'🤔 What if names go inside loop()?';$('#whWalk').disabled=bad;}
+  function zone(n){$$('.ln',el).forEach(r=>r.classList.toggle('zon',n>=0&&r.classList.contains(Z[n][2])));}
+  $('#whWalk').onclick=()=>{if(bad)return;clr();zone(0);tm.push(setTimeout(()=>zone(1),1800),setTimeout(()=>zone(2),3600));for(let k=0;k<4;k++){tm.push(setTimeout(()=>zone(-1),5000+k*700),setTimeout(()=>zone(2),5350+k*700));}tm.push(setTimeout(()=>zone(-1),8200));};
+  $('#whBad').onclick=()=>{clr();bad=!bad;draw();};
+  window.__where={enter(){clr();bad=false;draw();},leave(){clr();}};draw();
+})();
+
+/* ---------- 14 code with blanks ---------- */
+(function(){
+  const LEFT=['// Lesson 02 - Pedestrian Crossing','','// Car lights','const int CAR_RED    = 13;','const int CAR_YELLOW = 12;','const int CAR_GREEN  = {{b0}};','','// People lights','const int {{b1}}    = 10;','const int PED_GREEN  = 9;','','void setup() {','  pinMode(CAR_RED, OUTPUT);','  pinMode(CAR_YELLOW, OUTPUT);','  pinMode(CAR_GREEN, OUTPUT);','  pinMode(PED_RED, OUTPUT);','  pinMode(PED_GREEN, {{b2}});','  digitalWrite(PED_RED, HIGH); // people wait','}'];
+  const RIGHT=['void loop() {','  // 1) Cars GO, people wait','  digitalWrite(CAR_RED, LOW);','  digitalWrite(CAR_GREEN, HIGH);','  delay(5000);','','  // 2) Cars slow down','  digitalWrite(CAR_GREEN, {{b3}});','  digitalWrite(CAR_YELLOW, HIGH);','  delay(2000);','','  // 3) Everyone STOP (safety gap)','  digitalWrite(CAR_YELLOW, LOW);','  digitalWrite({{b4}}, HIGH);','  delay(1000);','','  // 4) People WALK','  digitalWrite(PED_RED, {{b5}});','  digitalWrite(PED_GREEN, {{b6}});','  delay(5000);','','  // 5) People wait, then back to the top','  digitalWrite(PED_GREEN, LOW);','  digitalWrite(PED_RED, HIGH);','  delay({{b7}});','}'];
+  const ANS=['11','PED_RED','OUTPUT','LOW','CAR_RED','LOW','HIGH','1000'];
+  const HINT=['pin from the map','people RED light','INPUT or OUTPUT?','turn green OFF','which light stops cars?','red OFF first…','…then green ON!','safety gap: 1 second'];
+  function render(el,lines,off){el.innerHTML=lines.map((l,i)=>`<div class="ln"><span class="no">${i+1+off}</span><span class="tx">${hl(l).replace(/\{\{b(\d+)\}\}/g,(m,n)=>`<span class="bw" data-h="${HINT[n]}"><input class="blank" data-b="${n}" spellcheck="false" autocomplete="off" autocapitalize="off" style="width:${ANS[n].length+1.6}ch"></span>`)||' '}</span></div>`).join('');}
+  render($('#bkL'),LEFT,0);render($('#bkR'),RIGHT,0);
+  const inputs=[...Array(8)].map((_,n)=>$(`.blank[data-b="${n}"]`));const msg=$('#bkMsg');
+  inputs.forEach((inp,n)=>{inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();(inputs[n+1]||inputs[0]).focus();}});inp.addEventListener('input',()=>{inp.classList.remove('ok','bad');});});
+  function check(){let ok=0,caseIssue=false;inputs.forEach((inp,n)=>{const v=inp.value.trim();const g=v===ANS[n];if(g)ok++;else if(v&&v.toLowerCase()===ANS[n].toLowerCase())caseIssue=true;
+      inp.classList.toggle('ok',g);inp.classList.toggle('bad',!g&&v!=='');inp.parentElement.classList.toggle('done',g);if(!g&&v){inp.classList.remove('shake');void inp.offsetWidth;inp.classList.add('shake');}});
+    msg.innerHTML=ok===8?'🎉 <b style="color:var(--grn)">8 / 8 correct!</b> Now press 📋 Copy code.':`${ok} / 8 blanks correct${caseIssue?' · <span style="color:var(--yel)">Check your CAPITAL letters. Arduino is picky!</span>':''}`;return ok;}
+  $('#bkCheck').onclick=check;
+  $('#bkHint').onclick=()=>$('#stage').classList.toggle('hints');
+  
+  function full(){const f=l=>l.replace(/\{\{b(\d+)\}\}/g,(m,n)=>inputs[n].value.trim()||'____');return LEFT.map(f).join('\n')+'\n\n'+RIGHT.map(f).join('\n')+'\n';}
+  window.__fullCode=()=>{const f=l=>l.replace(/\{\{b(\d+)\}\}/g,(m,n)=>ANS[n]);return LEFT.map(f).join('\n')+'\n\n'+RIGHT.map(f).join('\n')+'\n';};
+  $('#bkCopy').onclick=async()=>{const ok=check();const t=full();const done=await copyText(t);
+    if(!done){manualCopy(t);return;}
+    msg.innerHTML=ok===8?'📋 <b style="color:var(--grn)">Copied!</b> Paste it into Tinkercad (Code → Text).':`📋 Copied, but <b style="color:var(--yel)">${8-ok} blank${8-ok>1?'s are':' is'} not right yet</b>. Tinkercad will show an error!`;};
+})();
+
+/* ---------- real copy ---------- */
+$('#realCopy').onclick=()=>copyBtn(window.__fullCode(),$('#realMsg'),'✅ Copied! Paste it in Arduino IDE');
+
+/* ---------- 16 test ---------- */
+(function(){
+  const all=()=>[...$$('#checks .chk'),...$$('#cycles .cyc')];
+  function upd(){if(all().every(e=>e.classList.contains('on')))medal();}
+  $$('#checks .chk').forEach(c=>c.onclick=()=>{c.classList.toggle('on');upd();});
+  $$('#cycles .cyc').forEach(c=>c.onclick=()=>{c.classList.toggle('on');c.textContent=c.classList.contains('on')?'✓':c.dataset.n||c.textContent;upd();});
+  $$('#cycles .cyc').forEach((c,i)=>c.dataset.n=i+1);
+  const m=$('#medal');
+  function medal(){m.classList.add('show');const cols=['#ff4d5e','#ffc53d','#2fe69a','#5cc8ff','#a78bfa'];for(let i=0;i<70;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*1280+'px';d.style.background=cols[i%5];d.style.animationDuration=(1.6+Math.random()*1.6)+'s';d.style.animationDelay=Math.random()*.5+'s';m.appendChild(d);setTimeout(()=>d.remove(),4000);}}
+  m.onclick=()=>m.classList.remove('show');
+  let run=false,t0=0,acc=0,raf=null;const sw=$('#sw');
+  function f(now){const t=acc+(run?(now-t0):0);sw.textContent=(t/1000).toFixed(1)+' s';if(run)raf=requestAnimationFrame(f);}
+  $('#swGo').onclick=()=>{if(run){acc+=performance.now()-t0;run=false;}else{t0=performance.now();run=true;raf=requestAnimationFrame(f);}};
+  $('#swRe').onclick=()=>{run=false;acc=0;sw.textContent='0.0 s';};
+})();
+
+/* ---------- 17 accordion / 18 challenges ---------- */
+$$('#acc .it').forEach(it=>$('.hd',it).onclick=()=>it.classList.toggle('open'));
+$$('#chs [data-open]').forEach(b=>b.onclick=()=>b.closest('.ch').classList.toggle('open'));
+
+/* ---------- navigation ---------- */
+const slides=$$('.slide');let cur=-1;
+const HOOKS={
+  title:{enter:()=>titleCyc.start(),leave:()=>titleCyc.stop()},
+  concept:{enter:()=>window.__concept.enter()},
+  hook:{enter:()=>window.__hook.enter(),leave:()=>window.__hook.leave()},
+  map:{enter:()=>window.__map.start(),leave:()=>window.__map.stop()},
+  const:{enter:()=>window.__const.enter()},
+  sim:{leave:()=>sim.pause()},
+  tl:{enter:()=>window.__tl.enter(),leave:()=>window.__tl.leave()},
+  pred:{},
+  bug:{leave:()=>window.__bug.leave()},
+  where:{enter:()=>window.__where.enter(),leave:()=>window.__where.leave()},
+  tcad:{enter:()=>bb1.reset(),leave:()=>bb1.stop()},
+  real:{enter:()=>bb2.reset(),leave:()=>bb2.stop()}};
+function go(i){i=Math.max(0,Math.min(slides.length-1,i));if(i===cur)return;
+  if(cur>=0){const o=slides[cur];o.classList.remove('active');o.classList.toggle('back',i>cur);const h=HOOKS[o.dataset.id];h&&h.leave&&h.leave();}
+  const s=slides[i];s.classList.remove('back');s.classList.add('active');cur=i;const h=HOOKS[s.dataset.id];h&&h.enter&&h.enter();
+  $('#prog').style.width=((i+1)/slides.length*100)+'%';$('#count').textContent=`${i+1} / ${slides.length}`;$('#timeChip').textContent='⏱ '+s.dataset.time;$('#notes').innerHTML='📝 <b>Coach notes:</b> '+(s.dataset.notes||'');
+  try{history.replaceState(null,'','#slide-'+(i+1));}catch(e){}}
+$('#bNext').onclick=()=>go(cur+1);$('#bPrev').onclick=()=>go(cur-1);
+
+function fs(){try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{});}catch(e){}}
+$('#bFs').onclick=fs;
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTimeout(()=>b.blur(),0);});
+document.addEventListener('keydown',e=>{const tg=e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA')return;
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(cur+1);}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(slides.length-1);
+  
+  else if(e.key==='f'||e.key==='F')fs();});
+const m=(location.hash||'').match(/slide-(\d+)/);go(m?(+m[1]-1):0);
+})();
+</script>
+</body>
+</html>
